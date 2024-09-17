@@ -1,0 +1,2 @@
+"0","data <- read_rds(""data/raw/numeric_data.rds"")"
+"0","describe(data, na.rm = TRUE, skew = FALSE, ranges = TRUE)"
