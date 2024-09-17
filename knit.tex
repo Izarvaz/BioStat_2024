@@ -107,11 +107,20 @@
   pdfcreator={LaTeX via pandoc}}
 
 \title{home\_work}
+\usepackage{etoolbox}
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
+}
+\makeatother
+\subtitle{DEAD\textbar LINE}
 \author{Zarva\_I}
 \date{2024-09-17}
 
 \begin{document}
 \maketitle
+
+\#\#START
 
 \subsection{R Markdown}\label{r-markdown}
 
@@ -147,5 +156,921 @@ You can also embed plots, for example:
 
 Note that the \texttt{echo\ =\ FALSE} parameter was added to the code
 chunk to prevent printing of the R code that generated the plot.
+
+\#\#Domashka
+
+citation(``ggplot2'') .libPaths() library()
+source(``\url{https://bioconductor.org/biocLite.R}'')
+
+\#\#\#Bioconductor
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ControlFlowTok{if}\NormalTok{ (}\SpecialCharTok{!}\FunctionTok{require}\NormalTok{(}\StringTok{"BiocManager"}\NormalTok{, }\AttributeTok{quietly =} \ConstantTok{TRUE}\NormalTok{))  }\CommentTok{\#установил Bioconductor}
+  \FunctionTok{install.packages}\NormalTok{(}\StringTok{"BiocManager"}\NormalTok{)}
+
+\NormalTok{BiocManager}\SpecialCharTok{::}\FunctionTok{install}\NormalTok{(}\StringTok{"BiocVersion"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Bioconductor version 3.19 (BiocManager 1.30.23), R 4.4.1 (2024-06-14 ucrt)
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: package(s) not installed when version(s) same as or greater than current; use
+##   `force = TRUE` to re-install: 'BiocVersion'
+\end{verbatim}
+
+\begin{verbatim}
+## Installation paths not writeable, unable to update packages
+##   path: C:/Program Files/R/R-4.4.1/library
+##   packages:
+##     boot, foreign, MASS, nlme, survival
+\end{verbatim}
+
+\begin{verbatim}
+## Old packages: 'BiocManager', 'cpp11', 'curl', 'data.table', 'digest', 'ps',
+##   'ragg', 'rmarkdown', 'tinytex', 'xfun'
+\end{verbatim}
+
+\#\#\#dplyr
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#mutate() — изменяет переменные, добавляет новые;}
+\CommentTok{\#select() — выбирает переменные;}
+\CommentTok{\#filter() — фильтрует объекты по условиям;}
+\CommentTok{\#summarise() — вычисляет сводные статистики;}
+\CommentTok{\#arrange() — сортирует по переменным;}
+\CommentTok{\#group\_by() — группирует по значениям переменных;}
+\CommentTok{\#*\_join() — группа глаголов для склеивания двух таблиц по ключу.}
+
+\CommentTok{\#Пакет позволяет:}
+\CommentTok{\#Поворачивать данные, то есть, преобразовывать их в длинный и широкий форматы: \#pivot\_longer(), pivot\_wider();}
+\CommentTok{\#Разворачивать данные из вложенных списков в простые таблицы: unnest\_longer(), unnest\_wider();}
+\CommentTok{\#Наоборот, делать из таблиц вложенные переменные: nest(), unnest();}
+\CommentTok{\#Разделять и объединять столбцы по разделителю строк: separate(), unite();}
+\CommentTok{\#Заполнять отсутствующие значения определёнными значениями или удалять их: complete(), drop\_na(), fill(), replace\_na().}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#readr, readxl, haven
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Три основных пакета, которые помогают читать данные.}
+
+\CommentTok{\#readr предназначен для чтения самых распространённых форматов данных: *.csv, *.txt, *.tsv;}
+\CommentTok{\#redxl помогает читать файлы *.xlsx или, иными словами, всё, что пересылается в формате Excel;}
+\CommentTok{\#haven читает форматы *.sas7bdat, *.sap, *.dta, *.sav, *.por, то есть данные из SAS.}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#purrr
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Этот пакет может поначалу казаться сложным для понимания, однако на самом деле он просто расширяет функционал уже известного семейства функций *apply().}
+\CommentTok{\#Функция map() и её расширения позволяют итерироваться по элементам векторов или списков самыми разными способами}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#tibble
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#В базовом R уже есть data.frame, однако tibble позволяет создавать гораздо более приятные для работы таблицы данных.}
+
+\CommentTok{\#В отличие от data.frame он не приводит строки к факторам автоматически. Это нужно сделать самостоятельно, однако таким образом мы всегда в точности знаем, что находится в каждой переменной датафрейма;}
+\CommentTok{\#Имена переменных остаются такими же, какими были. Например, в переменной с названием "variable name" пробел не будет заменён на точку, вместо этого имя будет окружено апострофами (обычно находятся на букве "ё"), что сохраняет ожидания от названий;}
+\CommentTok{\#tibble оценивает переменные лениво. По существу, это значит, что при создании мы можем объявлять одну переменную на основе другой (но эта другая должна быть указана первой).}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#ggplot2 и ggpubr
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Для визуализации данных существует сразу два пакета: базовый ggplot, содержащий в себе почти всю необходимую для создания графики функциональность.}
+\CommentTok{\#Дополнительные интересные особенности вроде автоматического расчёта и добавления на график p{-}value, реализованы в пакете ggpubr.}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#flextable
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Необходимо ещё и напечатать эти таблицы в виде, пригодном для восприятия коллегами без лишних проблем. Именно для этого нужен пакет flextable}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#stringr
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Очень часто в данных есть строковые переменные, в которых записана некая текстовая информация, важная нам для исследования. Например, в одной ячейке записаны все возможные названия препарата, и стоит задача взять только тех участников исследования, у которых название препарата содержит подстроку "циклин".}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#lubridate
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Помимо строковых данных часто встречаются и даты. С ними нельзя работать как с факторами, строками или, тем более, числами. Для этого существует специальная библиотека, которая может даже вычислить разницу между двумя датами с учётом високосных годов. }
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#DescTools, psych
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Существуют пакеты, в которых собраны статистические функции, позволяющие чуть ли не в одну строку подготовить базовый статистический отчёт.}
+\CommentTok{\#В DescTools мы найдём полезные функции для статистических тестов и доверительных интервалов, а в psych функции для корреляционных матриц и расчёта сразу группы статистик.}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#read.*
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Выше мы видим пример файла csv с разделителем{-}запятой. Обсудим конкретно, какими функциями читается каждый формат:}
+
+\CommentTok{\#read.csv() читает csv с запятой в качестве разделителя;}
+\CommentTok{\#read.csv2() читает csv с точкой с запятой в качестве разделителя (кстати, этот же формат отлично читает Excel, сразу разбивая его на столбцы);}
+\CommentTok{\#read.tsv() читает csv со знаком табуляции в качестве разделителя (часто этот формат сохраняют в файле с расширением .txt).}
+\CommentTok{\#Однако, в каждой функции при этом можно указать параметры sep, quote, dec, которые, соответственно, устанавливают знаки: разделителя, кавычек, десятичного разделителя. }
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#write.*
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#write.csv(), write.csv2() печатают датафрейм в файлы csv с соответствующими разделителями, но их использование (особенно на Windows) может приводить к забавной вещи — поломке кодировки, когда символы в Excel не читаются человеком. Как решить эту проблему, мы узнаем в следующих шагах.}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{read\_tsv}\NormalTok{(}\StringTok{"data/raw/data\_tsv.tsv"}\NormalTok{, }\AttributeTok{skip =} \DecValTok{0}\NormalTok{, }\AttributeTok{n\_max =} \DecValTok{10}\NormalTok{, }\AttributeTok{col\_names =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Rows: 10 Columns: 13
+## -- Column specification --------------------------------------------------------
+## Delimiter: "\t"
+## chr  (3): Группа, Пол, Группа крови
+## dbl (10): Возраст, Рост, Базофилы_E1, Эозинофилы_E1, Гемоглобин_E1, Эритроци...
+## 
+## i Use `spec()` to retrieve the full column specification for this data.
+## i Specify the column types or set `show_col_types = FALSE` to quiet this message.
+\end{verbatim}
+
+\begin{verbatim}
+## # A tibble: 10 x 13
+##    Группа   Возраст Пол      Рост `Группа крови` Базофилы_E1 Эозинофилы_E1
+##    <chr>      <dbl> <chr>   <dbl> <chr>                <dbl>         <dbl>
+##  1 Группа 1      31 Женский   174 A (II)              0.422          0.646
+##  2 Группа 1      28 Женский   157 A (II)              0.327          4.97 
+##  3 Группа 1      33 Женский   166 <NA>                0.799          3.39 
+##  4 Группа 1      26 Женский   168 O (I)               0.0237         4.54 
+##  5 Группа 1      33 Женский   170 A (II)              0.664          3.32 
+##  6 Группа 1      28 Мужской   172 B (III)             0.481          2.79 
+##  7 Группа 1      27 Мужской   157 A (II)              0.890          2.34 
+##  8 Группа 1      31 Мужской   174 <NA>                0.858          3.98 
+##  9 Группа 1      23 Женский   175 A (II)              0.383          3.39 
+## 10 Группа 1      29 Женский   172 A (II)              0.281          7.94 
+## # i 6 more variables: Гемоглобин_E1 <dbl>, Эритроциты_E1 <dbl>,
+## #   Базофилы_E2 <dbl>, Эозинофилы_E2 <dbl>, Гемоглобин_E2 <dbl>,
+## #   Эритроциты_E2 <dbl>
+\end{verbatim}
+
+\#\#\#iris
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(datasets)}
+\FunctionTok{data}\NormalTok{(iris)}
+\FunctionTok{summary}\NormalTok{(iris)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   Sepal.Length    Sepal.Width     Petal.Length    Petal.Width   
+##  Min.   :4.300   Min.   :2.000   Min.   :1.000   Min.   :0.100  
+##  1st Qu.:5.100   1st Qu.:2.800   1st Qu.:1.600   1st Qu.:0.300  
+##  Median :5.800   Median :3.000   Median :4.350   Median :1.300  
+##  Mean   :5.843   Mean   :3.057   Mean   :3.758   Mean   :1.199  
+##  3rd Qu.:6.400   3rd Qu.:3.300   3rd Qu.:5.100   3rd Qu.:1.800  
+##  Max.   :7.900   Max.   :4.400   Max.   :6.900   Max.   :2.500  
+##        Species  
+##  setosa    :50  
+##  versicolor:50  
+##  virginica :50  
+##                 
+##                 
+## 
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#write\_csv(data, "data/raw/data\_csv.csv")}
+
+\CommentTok{\#write\_excel\_csv(data, "data/raw/data\_csv.csv")}
+
+\CommentTok{\#write\_csv2(data, "data/raw/data\_csv2.csv")}
+
+\CommentTok{\#write\_excel\_csv2(data, "data/raw/data\_csv2.csv")}
+
+\CommentTok{\#Ничего не работает...}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#read\_excel
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{read\_excel}\NormalTok{(}\StringTok{"data/raw/data\_excel.xlsx"}\NormalTok{, }\AttributeTok{sheet =} \StringTok{"data\_csv2"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 100 x 13
+##    Группа   Возраст Пол      Рост `Группа крови` Базофилы_E1 Эозинофилы_E1
+##    <chr>      <dbl> <chr>   <dbl> <chr>          <chr>       <chr>        
+##  1 Группа 1      31 Женский   174 A (II)         0,4222      0,6465       
+##  2 Группа 1      28 Женский   157 A (II)         0,3270      4,9742       
+##  3 Группа 1      33 Женский   166 NA             0,7994      3,3875       
+##  4 Группа 1      26 Женский   168 O (I)          0,0237      4,5403       
+##  5 Группа 1      33 Женский   170 A (II)         0,6636      3,3159       
+##  6 Группа 1      28 Мужской   172 B (III)        0,4810      2,7863       
+##  7 Группа 1      27 Мужской   157 A (II)         0,8899      2,3432       
+##  8 Группа 1      31 Мужской   174 NA             0,8576      3,9788       
+##  9 Группа 1      23 Женский   175 A (II)         0,3832      3,3896       
+## 10 Группа 1      29 Женский   172 A (II)         0,2812      7,9352       
+## # i 90 more rows
+## # i 6 more variables: Гемоглобин_E1 <chr>, Эритроциты_E1 <chr>,
+## #   Базофилы_E2 <chr>, Эозинофилы_E2 <chr>, Гемоглобин_E2 <chr>,
+## #   Эритроциты_E2 <chr>
+\end{verbatim}
+
+\#\#\#xlsx::write.xlsx()
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Существует несколько пакетов, позволяющих записывать данные в книги Excel: xlsx, openxlsx, writexl. Однако, здесь мы будем использовать openxlsx, поскольку он не требует установки Java и наиболее просто устанавливается почти на всех компьютерах.}
+
+\CommentTok{\#write.xlsx(data, "data\_excel.xlsx", colNames = TRUE)}
+
+\CommentTok{\#Вот и всё. У нас появляется файл Excel с записанными данными. Перейдём к бонусу для тех, у кого установлен Java.}
+
+\CommentTok{\#openxlsx::write.xlsx(), openxlsx::write.xlsx2()}
+
+\CommentTok{\#Прежде всего отметим, что дублирующая функция с цифрой 2 используется преимущественно для того, чтобы быстро записывать крайне большие датафреймы (более, чем 100 тысяч ячеек).}
+
+\CommentTok{\#write.xlsx(data, "data\_excel.xlsx", sheetName = "data", col.names = TRUE, row.names = TRUE, append = FALSE)}
+
+\CommentTok{\#Функция создаёт книгу Excel, а в ней лист с соответствующим именем. Аргументы col.names и row.names говорят, нужно ли записывать в файл имена столбцов и имена строк соответственно. Аргумент append нужен для того, чтобы...}
+
+\CommentTok{\#write.xlsx(data, "data\_excel.xlsx", sheetName = "data\_2", col.names = TRUE, row.names = TRUE, append = TRUE)}
+
+\CommentTok{\#...добавлять новые листы к уже существующей книге. }
+
+\CommentTok{\#haven::read\_spss(), haven::read\_sas()}
+
+\CommentTok{\#Очень редко, но приходится читать данные, которые выгружены напрямую из SPSS или SAS.}
+
+\CommentTok{\#haven::write\_sav() }
+
+\CommentTok{\#Точно так же можно записать данные, чтобы наш предполагаемый коллега мог загрузить их в SPSS.}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#mean()
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mean}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\DecValTok{20}\NormalTok{, }\DecValTok{68}\NormalTok{, }\DecValTok{45}\NormalTok{, }\DecValTok{76}\NormalTok{, }\DecValTok{41}\NormalTok{, }\DecValTok{36}\NormalTok{, }\DecValTok{13}\NormalTok{, }\DecValTok{52}\NormalTok{, }\DecValTok{77}\NormalTok{, }\DecValTok{53}\NormalTok{, }\DecValTok{70}\NormalTok{, }\DecValTok{73}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 52
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{a1 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{, }\DecValTok{5}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{12}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{12}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{8}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{10}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{a2 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{76}\NormalTok{, }\DecValTok{65}\NormalTok{, }\DecValTok{71}\NormalTok{, }\DecValTok{16}\NormalTok{, }\DecValTok{60}\NormalTok{, }\DecValTok{29}\NormalTok{, }\DecValTok{71}\NormalTok{, }\DecValTok{46}\NormalTok{, }\DecValTok{45}\NormalTok{, }\DecValTok{41}\NormalTok{)}
+\NormalTok{a3 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{2}\NormalTok{, }\DecValTok{16}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{3}\NormalTok{, }\DecValTok{16}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{9}\NormalTok{, }\DecValTok{7}\NormalTok{, }\DecValTok{31}\NormalTok{)}
+\NormalTok{a4 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{19}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{9}\NormalTok{, }\DecValTok{19}\NormalTok{, }\DecValTok{5}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{14}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{34}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{8}\NormalTok{, }\DecValTok{34}\NormalTok{, }\DecValTok{24}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{11}\NormalTok{, }\DecValTok{8}\NormalTok{, }\DecValTok{33}\NormalTok{, }\DecValTok{12}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{6}\NormalTok{)}
+\NormalTok{a5 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\ConstantTok{NA}\NormalTok{, }\ConstantTok{NA}\NormalTok{, }\ConstantTok{NA}\NormalTok{, }\ConstantTok{NA}\NormalTok{, }\ConstantTok{NA}\NormalTok{, }\ConstantTok{NA}\NormalTok{, }\DecValTok{3}\NormalTok{, }\ConstantTok{NA}\NormalTok{, }\ConstantTok{NA}\NormalTok{)}
+\NormalTok{a6 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{13}\NormalTok{, }\DecValTok{19}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{24}\NormalTok{, }\ConstantTok{NA}\NormalTok{, }\DecValTok{30}\NormalTok{, }\DecValTok{64}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{53}\NormalTok{, }\ConstantTok{NA}\NormalTok{, }\DecValTok{50}\NormalTok{, }\DecValTok{31}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{58}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{34}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{3}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{34}\NormalTok{, }\DecValTok{77}\NormalTok{)}
+
+\FunctionTok{mean}\NormalTok{(a1)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] -2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mean}\NormalTok{(a2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 52
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mean}\NormalTok{(a3)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 8
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mean}\NormalTok{(a4)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 6.8
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mean}\NormalTok{(a5)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] NA
+\end{verbatim}
+
+\#\#\#median()
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{b1 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{92}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{50}\NormalTok{, }\DecValTok{54}\NormalTok{, }\DecValTok{55}\NormalTok{, }\DecValTok{84}\NormalTok{, }\DecValTok{52}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{55}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{23}\NormalTok{, }\DecValTok{36}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{11}\NormalTok{, }\DecValTok{22}\NormalTok{, }\DecValTok{11}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{7}\NormalTok{)}
+\NormalTok{b2 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{9}\NormalTok{, }\ConstantTok{NA}\NormalTok{, }\DecValTok{88}\NormalTok{, }\DecValTok{2}\NormalTok{, }\ConstantTok{NA}\NormalTok{, }\DecValTok{42}\NormalTok{, }\ConstantTok{NA}\NormalTok{, }\DecValTok{4}\NormalTok{, }\DecValTok{68}\NormalTok{, }\ConstantTok{NA}\NormalTok{)}
+\NormalTok{b3 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{15}\NormalTok{, }\DecValTok{71}\NormalTok{, }\DecValTok{77}\NormalTok{, }\DecValTok{36}\NormalTok{, }\DecValTok{66}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{21}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{48}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{8}\NormalTok{)}
+\NormalTok{b4 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{19}\NormalTok{, }\DecValTok{89}\NormalTok{, }\DecValTok{78}\NormalTok{, }\DecValTok{38}\NormalTok{, }\DecValTok{8}\NormalTok{, }\DecValTok{17}\NormalTok{, }\DecValTok{25}\NormalTok{, }\DecValTok{60}\NormalTok{, }\DecValTok{8}\NormalTok{, }\DecValTok{43}\NormalTok{, }\DecValTok{29}\NormalTok{, }\DecValTok{6}\NormalTok{, }\DecValTok{62}\NormalTok{, }\DecValTok{41}\NormalTok{, }\DecValTok{69}\NormalTok{, }\DecValTok{97}\NormalTok{, }\DecValTok{61}\NormalTok{, }\DecValTok{83}\NormalTok{, }\DecValTok{25}\NormalTok{, }\DecValTok{24}\NormalTok{)}
+\NormalTok{b5 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{91}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{33}\NormalTok{, }\DecValTok{13}\NormalTok{, }\DecValTok{34}\NormalTok{, }\DecValTok{34}\NormalTok{, }\DecValTok{75}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{80}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{35}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{90}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{72}\NormalTok{, }\DecValTok{70}\NormalTok{, }\DecValTok{67}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{100}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{94}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{18}\NormalTok{)}
+
+\FunctionTok{median}\NormalTok{(b1)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 11
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{median}\NormalTok{(b2, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 9
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{median}\NormalTok{(b3)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 14
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{median}\NormalTok{(b4)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 39.5
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{median}\NormalTok{(b5)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] -33
+\end{verbatim}
+
+\#\#\#min(), max()
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{c1 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{68.92}\NormalTok{, }\FloatTok{44.15}\NormalTok{, }\FloatTok{34.2}\NormalTok{, }\FloatTok{34.12}\NormalTok{, }\FloatTok{37.7}\NormalTok{, }\FloatTok{73.95}\NormalTok{, }\FloatTok{36.9}\NormalTok{, }\FloatTok{59.26}\NormalTok{, }\FloatTok{31.06}\NormalTok{, }\FloatTok{55.79}\NormalTok{, }\FloatTok{73.92}\NormalTok{, }\FloatTok{68.04}\NormalTok{, }\FloatTok{53.73}\NormalTok{, }\FloatTok{90.7}\NormalTok{, }\FloatTok{39.66}\NormalTok{)}
+\NormalTok{c2 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{90.48}\NormalTok{, }\FloatTok{31.16}\NormalTok{, }\FloatTok{44.4}\NormalTok{, }\FloatTok{21.94}\NormalTok{, }\FloatTok{84.37}\NormalTok{, }\FloatTok{53.15}\NormalTok{, }\FloatTok{81.15}\NormalTok{, }\FloatTok{47.86}\NormalTok{, }\FloatTok{63.23}\NormalTok{, }\FloatTok{46.75}\NormalTok{, }\FloatTok{102.73}\NormalTok{)}
+\NormalTok{c3 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{48.11}\NormalTok{, }\FloatTok{45.3}\NormalTok{, }\FloatTok{58.42}\NormalTok{, }\FloatTok{51.64}\NormalTok{, }\FloatTok{62.07}\NormalTok{, }\FloatTok{57.26}\NormalTok{, }\FloatTok{49.69}\NormalTok{, }\FloatTok{93.29}\NormalTok{, }\FloatTok{81.18}\NormalTok{, }\FloatTok{44.78}\NormalTok{, }\FloatTok{55.1}\NormalTok{, }\FloatTok{76.74}\NormalTok{, }\FloatTok{58.08}\NormalTok{)}
+\NormalTok{c4 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{17.24}\NormalTok{, }\FloatTok{35.77}\NormalTok{, }\FloatTok{57.57}\NormalTok{, }\FloatTok{30.15}\NormalTok{, }\FloatTok{43.27}\NormalTok{, }\FloatTok{77.56}\NormalTok{, }\FloatTok{72.19}\NormalTok{, }\FloatTok{40.45}\NormalTok{, }\FloatTok{46.2}\NormalTok{, }\FloatTok{39.92}\NormalTok{)}
+\NormalTok{c5 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{60.22}\NormalTok{, }\FloatTok{31.91}\NormalTok{, }\FloatTok{72.71}\NormalTok{, }\FloatTok{52.49}\NormalTok{, }\FloatTok{46.21}\NormalTok{, }\FloatTok{60.39}\NormalTok{, }\FloatTok{60.09}\NormalTok{)}
+
+\FunctionTok{min}\NormalTok{(c1, }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 31.06
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{max}\NormalTok{(c1, }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 90.7
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{min}\NormalTok{(c2, }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 21.94
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{max}\NormalTok{(c2, }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 102.73
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{min}\NormalTok{(c3, }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 44.78
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{max}\NormalTok{(c3, }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 93.29
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{min}\NormalTok{(c4, }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 17.24
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{max}\NormalTok{(c4, }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 77.56
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{min}\NormalTok{(c5, }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 31.91
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{max}\NormalTok{(c5, }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 72.71
+\end{verbatim}
+
+\#\#\#quantile()
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{d1 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{80.94}\NormalTok{, }\FloatTok{44.46}\NormalTok{, }\FloatTok{46.33}\NormalTok{, }\FloatTok{65.1}\NormalTok{, }\FloatTok{66.42}\NormalTok{, }\FloatTok{104.43}\NormalTok{, }\FloatTok{53.15}\NormalTok{, }\FloatTok{48.41}\NormalTok{, }\FloatTok{12.88}\NormalTok{, }\FloatTok{51.1}\NormalTok{, }\FloatTok{43.03}\NormalTok{, }\FloatTok{40.3}\NormalTok{, }\FloatTok{33.71}\NormalTok{, }\FloatTok{55.1}\NormalTok{, }\FloatTok{22.17}\NormalTok{)}
+\NormalTok{d2 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{26.17}\NormalTok{, }\FloatTok{97.73}\NormalTok{, }\FloatTok{24.81}\NormalTok{, }\FloatTok{53.62}\NormalTok{, }\FloatTok{87.72}\NormalTok{, }\FloatTok{45.19}\NormalTok{, }\FloatTok{45.7}\NormalTok{, }\FloatTok{69.63}\NormalTok{, }\FloatTok{36.76}\NormalTok{, }\FloatTok{7.17}\NormalTok{)}
+\NormalTok{d3 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{63.92}\NormalTok{, }\FloatTok{35.85}\NormalTok{, }\FloatTok{26.9}\NormalTok{, }\FloatTok{48.92}\NormalTok{, }\FloatTok{43.1}\NormalTok{, }\FloatTok{66.94}\NormalTok{, }\FloatTok{47.06}\NormalTok{, }\FloatTok{56.54}\NormalTok{, }\FloatTok{29.1}\NormalTok{, }\FloatTok{58.88}\NormalTok{)}
+\NormalTok{d4 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{32.05}\NormalTok{, }\FloatTok{93.85}\NormalTok{, }\FloatTok{85.52}\NormalTok{, }\FloatTok{56.69}\NormalTok{, }\FloatTok{23.69}\NormalTok{, }\FloatTok{11.29}\NormalTok{, }\FloatTok{51.44}\NormalTok{, }\FloatTok{63.09}\NormalTok{, }\FloatTok{65.65}\NormalTok{, }\FloatTok{35.73}\NormalTok{, }\FloatTok{60.15}\NormalTok{, }\FloatTok{30.93}\NormalTok{, }\SpecialCharTok{{-}}\FloatTok{4.2}\NormalTok{)}
+
+\FunctionTok{quantile}\NormalTok{(d1, }\AttributeTok{probs =} \FunctionTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\FloatTok{0.25}\NormalTok{), }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{names =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{type =} \DecValTok{7}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      0%     25%     50%     75%    100% 
+##  12.880  41.665  48.410  60.100 104.430
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{quantile}\NormalTok{(d2, }\AttributeTok{probs =} \FunctionTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\FloatTok{0.25}\NormalTok{), }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{names =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{type =} \DecValTok{7}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      0%     25%     50%     75%    100% 
+##  7.1700 28.8175 45.4450 65.6275 97.7300
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{quantile}\NormalTok{(d3, }\AttributeTok{probs =} \FunctionTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\FloatTok{0.025}\NormalTok{), }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{names =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{type =} \DecValTok{7}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       0%     2.5%       5%     7.5%      10%    12.5%      15%    17.5% 
+## 26.90000 27.39500 27.89000 28.38500 28.88000 29.94375 31.46250 32.98125 
+##      20%    22.5%      25%    27.5%      30%    32.5%      35%    37.5% 
+## 34.50000 36.03125 37.66250 39.29375 40.92500 42.55625 43.69400 44.58500 
+##      40%    42.5%      45%    47.5%      50%    52.5%      55%    57.5% 
+## 45.47600 46.36700 47.15300 47.57150 47.99000 48.40850 48.82700 50.25350 
+##      60%    62.5%      65%    67.5%      70%    72.5%      75%    77.5% 
+## 51.96800 53.68250 55.39700 56.71550 57.24200 57.76850 58.29500 58.82150 
+##      80%    82.5%      85%    87.5%      90%    92.5%      95%    97.5% 
+## 59.88800 61.02200 62.15600 63.29000 64.22200 64.90150 65.58100 66.26050 
+##     100% 
+## 66.94000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{quantile}\NormalTok{(d4, }\AttributeTok{probs =} \FunctionTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\FloatTok{0.25}\NormalTok{), }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{names =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{type =} \DecValTok{7}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    0%   25%   50%   75%  100% 
+## -4.20 30.93 51.44 63.09 93.85
+\end{verbatim}
+
+\#\#\#var(), sd()
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{e1 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{47.44}\NormalTok{, }\FloatTok{62.44}\NormalTok{, }\FloatTok{20.44}\NormalTok{, }\FloatTok{72.75}\NormalTok{, }\FloatTok{77.86}\NormalTok{, }\FloatTok{13.74}\NormalTok{, }\FloatTok{28.2}\NormalTok{, }\FloatTok{50.47}\NormalTok{, }\FloatTok{59.19}\NormalTok{, }\FloatTok{69.04}\NormalTok{)}
+\NormalTok{e2 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{49.31}\NormalTok{, }\FloatTok{44.47}\NormalTok{, }\FloatTok{14.04}\NormalTok{, }\FloatTok{44.43}\NormalTok{, }\FloatTok{49.18}\NormalTok{, }\FloatTok{40.73}\NormalTok{, }\FloatTok{44.65}\NormalTok{, }\FloatTok{41.91}\NormalTok{, }\FloatTok{80.38}\NormalTok{, }\FloatTok{80.09}\NormalTok{)}
+\NormalTok{e3 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{57.96}\NormalTok{, }\FloatTok{20.81}\NormalTok{, }\FloatTok{8.92}\NormalTok{, }\FloatTok{14.03}\NormalTok{, }\FloatTok{61.02}\NormalTok{, }\FloatTok{25.69}\NormalTok{, }\FloatTok{21.22}\NormalTok{, }\FloatTok{49.56}\NormalTok{, }\FloatTok{25.64}\NormalTok{, }\FloatTok{28.31}\NormalTok{)}
+\NormalTok{e4 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{76.22}\NormalTok{, }\DecValTok{65}\NormalTok{, }\FloatTok{19.69}\NormalTok{, }\FloatTok{29.84}\NormalTok{, }\FloatTok{37.18}\NormalTok{, }\FloatTok{70.93}\NormalTok{, }\FloatTok{64.78}\NormalTok{, }\FloatTok{61.66}\NormalTok{, }\FloatTok{49.03}\NormalTok{, }\FloatTok{51.56}\NormalTok{)}
+\NormalTok{e5 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{92.11}\NormalTok{, }\DecValTok{56}\NormalTok{, }\FloatTok{47.89}\NormalTok{, }\FloatTok{62.96}\NormalTok{, }\FloatTok{47.41}\NormalTok{, }\FloatTok{37.05}\NormalTok{, }\FloatTok{73.96}\NormalTok{, }\DecValTok{53}\NormalTok{, }\FloatTok{52.37}\NormalTok{, }\FloatTok{85.23}\NormalTok{)}
+
+\FunctionTok{var}\NormalTok{(e1, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 507.3136
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sd}\NormalTok{(e1, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 22.52362
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{var}\NormalTok{(e2, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 372.5051
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sd}\NormalTok{(e2, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 19.30039
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{var}\NormalTok{(e3, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 334.519
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sd}\NormalTok{(e3, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 18.28986
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{var}\NormalTok{(e4, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 347.8641
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sd}\NormalTok{(e4, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 18.65111
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{var}\NormalTok{(e5, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 313.3289
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sd}\NormalTok{(e5, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 17.7011
+\end{verbatim}
+
+\#\#\#IQR()
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{f1 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{80.94}\NormalTok{, }\FloatTok{44.46}\NormalTok{, }\FloatTok{46.33}\NormalTok{, }\FloatTok{65.1}\NormalTok{, }\FloatTok{66.42}\NormalTok{, }\FloatTok{104.43}\NormalTok{, }\FloatTok{53.15}\NormalTok{, }\FloatTok{48.41}\NormalTok{, }\FloatTok{12.88}\NormalTok{, }\FloatTok{51.1}\NormalTok{, }\FloatTok{43.03}\NormalTok{, }\FloatTok{40.3}\NormalTok{, }\FloatTok{33.71}\NormalTok{, }\FloatTok{55.1}\NormalTok{, }\FloatTok{22.17}\NormalTok{)}
+\NormalTok{f2 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{26.17}\NormalTok{, }\FloatTok{97.73}\NormalTok{, }\FloatTok{24.81}\NormalTok{, }\FloatTok{53.62}\NormalTok{, }\FloatTok{87.72}\NormalTok{, }\FloatTok{45.19}\NormalTok{, }\FloatTok{45.7}\NormalTok{, }\FloatTok{69.63}\NormalTok{, }\FloatTok{36.76}\NormalTok{, }\FloatTok{7.17}\NormalTok{)}
+\NormalTok{f3 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{63.92}\NormalTok{, }\FloatTok{35.85}\NormalTok{, }\FloatTok{26.9}\NormalTok{, }\FloatTok{48.92}\NormalTok{, }\FloatTok{43.1}\NormalTok{, }\FloatTok{66.94}\NormalTok{, }\FloatTok{47.06}\NormalTok{, }\FloatTok{56.54}\NormalTok{, }\FloatTok{29.1}\NormalTok{, }\FloatTok{58.88}\NormalTok{)}
+\NormalTok{f4 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{32.05}\NormalTok{, }\FloatTok{93.85}\NormalTok{, }\FloatTok{85.52}\NormalTok{, }\FloatTok{56.69}\NormalTok{, }\FloatTok{23.69}\NormalTok{, }\FloatTok{11.29}\NormalTok{, }\FloatTok{51.44}\NormalTok{, }\FloatTok{63.09}\NormalTok{, }\FloatTok{65.65}\NormalTok{, }\FloatTok{35.73}\NormalTok{, }\FloatTok{60.15}\NormalTok{, }\FloatTok{30.93}\NormalTok{, }\SpecialCharTok{{-}}\FloatTok{4.2}\NormalTok{)}
+
+\FunctionTok{IQR}\NormalTok{(f1, }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{type =} \DecValTok{7}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 18.435
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{IQR}\NormalTok{(f2, }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{type =} \DecValTok{7}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 36.81
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{IQR}\NormalTok{(f3, }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{type =} \DecValTok{7}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 20.6325
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{IQR}\NormalTok{(f4, }\AttributeTok{na.rm =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{type =} \DecValTok{7}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 32.16
+\end{verbatim}
+
+\#\#\#length()
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Приведём лайфхак, косвенно связанный с количеством значений вектора. }
+
+\CommentTok{\#Зачастую в работе нам нужно включить в таблицы количество значений без пропущенных значений и количество именно пропущенных значений:}
+
+\CommentTok{\#sum(!is.na(vec)): количество значений без учёта пропущенных;}
+\CommentTok{\#sum(is.na(vec)): количество пропущенных значений.}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#Стандартная ошибка среднего sd(x)/sqrt(length(x))
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{d1 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{47.44}\NormalTok{, }\FloatTok{62.44}\NormalTok{, }\FloatTok{20.44}\NormalTok{, }\FloatTok{72.75}\NormalTok{, }\FloatTok{77.86}\NormalTok{, }\FloatTok{13.74}\NormalTok{, }\FloatTok{28.2}\NormalTok{, }\FloatTok{50.47}\NormalTok{, }\FloatTok{59.19}\NormalTok{, }\FloatTok{69.04}\NormalTok{)}
+\NormalTok{d2 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{49.31}\NormalTok{, }\FloatTok{44.47}\NormalTok{, }\FloatTok{14.04}\NormalTok{, }\FloatTok{44.43}\NormalTok{, }\FloatTok{49.18}\NormalTok{, }\FloatTok{40.73}\NormalTok{, }\FloatTok{44.65}\NormalTok{, }\FloatTok{41.91}\NormalTok{, }\FloatTok{80.38}\NormalTok{, }\FloatTok{80.09}\NormalTok{)}
+\NormalTok{d3 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{57.96}\NormalTok{, }\FloatTok{20.81}\NormalTok{, }\FloatTok{8.92}\NormalTok{, }\FloatTok{14.03}\NormalTok{, }\FloatTok{61.02}\NormalTok{, }\FloatTok{25.69}\NormalTok{, }\FloatTok{21.22}\NormalTok{, }\FloatTok{49.56}\NormalTok{, }\FloatTok{25.64}\NormalTok{, }\FloatTok{28.31}\NormalTok{)}
+\NormalTok{d4 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{76.22}\NormalTok{, }\DecValTok{65}\NormalTok{, }\FloatTok{19.69}\NormalTok{, }\FloatTok{29.84}\NormalTok{, }\FloatTok{37.18}\NormalTok{, }\FloatTok{70.93}\NormalTok{, }\FloatTok{64.78}\NormalTok{, }\FloatTok{61.66}\NormalTok{, }\FloatTok{49.03}\NormalTok{, }\FloatTok{51.56}\NormalTok{)}
+\NormalTok{d5 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{92.11}\NormalTok{, }\DecValTok{56}\NormalTok{, }\FloatTok{47.89}\NormalTok{, }\FloatTok{62.96}\NormalTok{, }\FloatTok{47.41}\NormalTok{, }\FloatTok{37.05}\NormalTok{, }\FloatTok{73.96}\NormalTok{, }\DecValTok{53}\NormalTok{, }\FloatTok{52.37}\NormalTok{, }\FloatTok{85.23}\NormalTok{)}
+
+\FunctionTok{sd}\NormalTok{(d1)}\SpecialCharTok{/}\FunctionTok{sqrt}\NormalTok{(}\FunctionTok{length}\NormalTok{(d1))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 7.122595
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sd}\NormalTok{(d2)}\SpecialCharTok{/}\FunctionTok{sqrt}\NormalTok{(}\FunctionTok{length}\NormalTok{(d2))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 6.10332
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sd}\NormalTok{(d3)}\SpecialCharTok{/}\FunctionTok{sqrt}\NormalTok{(}\FunctionTok{length}\NormalTok{(d3))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 5.783761
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sd}\NormalTok{(d4)}\SpecialCharTok{/}\FunctionTok{sqrt}\NormalTok{(}\FunctionTok{length}\NormalTok{(d4))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 5.898
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sd}\NormalTok{(d5)}\SpecialCharTok{/}\FunctionTok{sqrt}\NormalTok{(}\FunctionTok{length}\NormalTok{(d5))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 5.597579
+\end{verbatim}
+
+\#\#\#summary()
+
+\#\#\#psych::describe()
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\OtherTok{\textless{}{-}} \FunctionTok{read\_rds}\NormalTok{(}\StringTok{"data/raw/numeric\_data.rds"}\NormalTok{)}
+\FunctionTok{describe}\NormalTok{(data, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{skew =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{ranges =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##               vars   n   mean   sd median    min    max range   se
+## Возраст          1 100  30.25 3.98  30.50  21.00  42.00 21.00 0.40
+## Рост             2 100 167.70 5.77 168.00 155.00 181.00 26.00 0.58
+## Базофилы_E1      3 100   0.65 0.38   0.65  -0.22   1.72  1.94 0.04
+## Эозинофилы_E1    4 100   3.71 2.15   3.73  -1.23   8.43  9.66 0.21
+## Гемоглобин_E1    5 100  11.86 1.78  11.71   5.35  16.23 10.88 0.18
+## Эритроциты_E1    6 100   4.10 0.67   4.08   2.82   5.73  2.91 0.07
+## Базофилы_E2      7 100   1.06 0.38   1.06   0.19   2.12  1.94 0.04
+## Эозинофилы_E2    8 100   4.72 2.15   4.74  -0.21   9.45  9.66 0.21
+## Гемоглобин_E2    9 100  12.58 1.78  12.43   6.07  16.95 10.88 0.18
+## Эритроциты_E2   10 100   6.42 0.67   6.40   5.14   8.04  2.91 0.07
+\end{verbatim}
+
+\#\#\#table(), prop.table()
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data1 }\OtherTok{\textless{}{-}} \FunctionTok{read\_rds}\NormalTok{(}\StringTok{"data/raw/factor\_data.rds"}\NormalTok{)}
+\FunctionTok{table}\NormalTok{(data1}\SpecialCharTok{$}\NormalTok{Группа, data1}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{Группа крови}\StringTok{\textasciigrave{}}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                             
+##                              O (I) A (II) B (III) AB (IV) <NA>
+##   \xc3\xf0\xf3\xef\xef\xe0 1    10     16      11       4    9
+##   \xc3\xf0\xf3\xef\xef\xe0 2    15     18       5       4    8
+\end{verbatim}
+
+\#\#\#tibble()
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Особенности tibble:}
+
+\CommentTok{\#tibble не изменяют тип ввода. Если вы вводили переменные типа character, то такими они и будут. Если numeric, то будут numeric. В том числе это позволяет даже вводить в качестве значений ячеек списки!}
+\CommentTok{\#tibble не меняет имена переменных: если вы ввели имя с пробелом, то он не будет заполнен точкой или иным знаком, однако, нужно оборачивать имена в апострофы (чаще всего находится на клавише буквы "ё" в верхнем левом углу клавиатуры). Это следует делать всякий раз, когда имя переменной отличается от простой строки на латинице без иных знаков. Например: columnname не требует апострофов, а \textasciigrave{}column name\textasciigrave{} уже требует;}
+\CommentTok{\#Оценивает аргументы лениво и последовательно, что мы разберём в следующем шаге;}
+\CommentTok{\#Не использует имена строк;}
+\CommentTok{\#При выводе таблицы данных в печать автоматически будут показаны только первые 10 строк и все столбцы, которые поместятся на экран. Благодаря этому даже очень большой датафрейм не заставит наш компьютер зависнуть.}
+\CommentTok{\#Заметка: чтобы превратить data.frame в tibble, достаточно просто применить функцию as\_tibble()}
+\end{Highlighting}
+\end{Shaded}
+
+tibble(var\_first = 1:10, var\_second = ifelse(var\_first \textless{} 5,
+var\_first + 100, var\_first)) tibble(var = 1:10, var = var - 10000000)
+tibble(\texttt{var\ 1} = 1:10, \texttt{var\ 2} = \texttt{var\ 1} * 100)
+tibble(var\_first = 1:10, var\_first = ifelse(var\_first \textless{} 5,
+var\_first + 100, var\_first)) tibble(\texttt{var\ 2} = 10:1,
+\texttt{var\ 3} = \texttt{var\ 1} - 10) tibble(var\_1 = c(1:10) - 100,
+var\_2 = 1:100)
+
+\#\#\#View() \#\#\#tibble::add\_column()
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#data \%\textgreater{}\% add\_column(column\_name = 1:10, .before = NULL, .after = NULL)}
+
+\CommentTok{\#data: просто имя датафрейма, к которому мы хотим добавить столбец;}
+\CommentTok{\#column\_name: это имя нового столбца. Оно может быть любым, не только таким, как в примере;}
+\CommentTok{\#.before: номер уже существующего столбца, перед которым нужно поставить новый;}
+\CommentTok{\#.after: то же, но уже после которого нужно поставить новый. Хитрый приём: если нужно поставить переменную в конец датафрейма, то в значение можно поставить Inf.}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#tibble::add\_row()
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#data \%\textgreater{}\% add\_row(var\_1 = 1, var\_2 = "value", .before = NULL, .after = NULL)}
+
+\CommentTok{\#data: просто имя датафрейма, к которому мы хотим добавить столбец;}
+\CommentTok{\#var\_1, var\_2: это имя нового столбца. Оно может быть любым, не только таким, как в примере;}
+\CommentTok{\#.before: номер уже существующей строки, перед которым нужно поставить новый;}
+\CommentTok{\#.after: то же, но уже после которого нужно поставить новый. Хитрый приём: если нужно поставить переменную в низ датафрейма, то в значение можно поставить Inf}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#dplyr::row\_number()
+
+\#\#\#dplyr::bind\_cols()
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Мы можем сделать из двух и более таблиц одну, склеив их столбцы.}
+
+\CommentTok{\#data\_1 \%\textgreater{}\% bind\_cols(data\_2) \%\textgreater{}\% bind\_cols(data\_3)}
+\end{Highlighting}
+\end{Shaded}
+
 
 \end{document}
