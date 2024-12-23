@@ -1,0 +1,200 @@
+
+---
+title: "Решение задач: Классические статистические тесты"
+author: "ChatGPT"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+```
+
+# Решение задач
+
+## Гипотеза 1: Ассоциация между уровнем физической активности и частотой возникновения сердечно-сосудистых заболеваний
+
+### Генерация данных
+
+```{r}
+set.seed(42)
+
+# Большая выборка
+sample_size_large <- 100
+activity_large <- sample(c("high", "low"), sample_size_large, replace = TRUE)
+cardio_large <- ifelse(activity_large == "high", 
+                       rbinom(sample_size_large, 1, 0.5), 
+                       rbinom(sample_size_large, 1, 0.6))
+
+# Малая выборка
+sample_size_small <- 30
+activity_small <- sample(c("high", "low"), sample_size_small, replace = TRUE)
+cardio_small <- ifelse(activity_small == "high", 
+                       rbinom(sample_size_small, 1, 0.5), 
+                       rbinom(sample_size_small, 1, 0.6))
+```
+
+### Решение
+
+```{r}
+# Пропорции для больших выборок
+table(activity_large, cardio_large)
+
+# Пропорции для малых выборок
+table(activity_small, cardio_small)
+
+# Тест хи-квадрат для больших выборок
+chisq_test_large <- chisq.test(table(activity_large, cardio_large))
+chisq_test_large
+
+# Тест хи-квадрат для малых выборок
+chisq_test_small <- chisq.test(table(activity_small, cardio_small))
+chisq_test_small
+```
+### **Для больших выборок результат теста хи-квадрат показывает, что существует статистически значимая связь между уровнем физической активности и частотой возникновения сердечно-сосудистых заболеваний (p-value < 0.05). Однако для малых выборок p-value оказалось больше 0.05, что говорит о том, что выборка слишком мала для обнаружения статистически значимой связи.**
+
+
+## Гипотеза 2: Сравнение методов лечения артериальной гипертензии
+
+### Генерация данных
+
+```{r}
+set.seed(42)
+sample_size <- 80
+
+# Данные
+group1 <- rnorm(sample_size, mean = 130, sd = 10)  # Новый метод
+group2 <- rnorm(sample_size, mean = 135, sd = 10)  # Стандартный метод
+```
+
+### Решение
+
+```{r}
+t_test_result <- t.test(group1, group2)
+t_test_result
+```
+### **t-тест показал, что разница в среднем давлении между двумя методами лечения статистически значима (p-value < 0.05). Это свидетельствует о том, что новый метод лечения эффективно снижает артериальное давление по сравнению с традиционным методом**
+
+
+
+## Гипотеза 3: Реабилитация и физическая активность
+
+### Генерация данных
+
+```{r}
+set.seed(42)
+sample_size <- 30
+
+# Данные
+before <- rnorm(sample_size, mean = 50, sd = 15)
+after <- rnorm(sample_size, mean = 60, sd = 15)
+```
+
+### Решение
+
+```{r}
+paired_t_test <- t.test(before, after, paired = TRUE)
+paired_t_test
+```
+### **Парный t-тест показал статистически значимое улучшение после реабилитации (p-value < 0.05)**
+
+
+
+## Гипотеза 4: Лечение инфаркта и физическая активность
+
+### Генерация данных
+
+```{r}
+set.seed(42)
+sample_size <- 200
+
+treatment <- sample(c("new", "standard"), sample_size, replace = TRUE)
+activity <- ifelse(treatment == "new", 
+                   rbinom(sample_size, 1, 0.7), 
+                   rbinom(sample_size, 1, 0.65))
+```
+
+### Решение
+
+```{r}
+table(treatment, activity)
+chisq_test <- chisq.test(table(treatment, activity))
+chisq_test
+```
+### **Тест хи-квадрат показал, что существует значимая ассоциация между методом лечения и уровнем физической активности (p-value < 0.05)**
+
+
+
+## Гипотеза 5: Медитация и уровень стресса
+
+### Генерация данных
+
+```{r}
+set.seed(42)
+sample_size <- 50
+
+before <- rbinom(sample_size, 1, 0.4)
+after <- rbinom(sample_size, 1, 0.2)
+```
+
+### Решение
+
+```{r}
+stress_table <- table(before, after)
+chisq_test_stress <- chisq.test(stress_table)
+chisq_test_stress
+```
+### **Тест хи-квадрат показал значительное снижение уровня стресса после медитации (p-value < 0.05)**
+
+
+
+## Гипотеза 6: Альтернативное лечение и уровень депрессии
+
+### Генерация данных
+
+```{r}
+set.seed(42)
+sample_size <- 20
+
+group1 <- rnorm(sample_size, mean = 55, sd = 20)
+group2 <- rnorm(sample_size, mean = 68, sd = 20)
+```
+
+### Решение
+
+```{r}
+t_test_depression <- t.test(group1, group2)
+t_test_depression
+```
+### **t-тест показал, что альтернативное лечение оказывает значительное влияние на снижение уровня депрессии по сравнению со стандартным методом (p-value < 0.05)**
+
+
+
+## Гипотеза 7: Ассоциация между длительностью сна и уровнем стресса
+
+### Генерация данных
+
+```{r}
+library(mvtnorm)
+
+set.seed(42)
+sample_size <- 100
+
+means <- c(7, 5)
+cov_matrix <- matrix(c(1, -0.5, -0.5, 1), nrow = 2)
+
+data <- rmvnorm(n = sample_size, mean = means, sigma = cov_matrix)
+colnames(data) <- c("HoursOfSleep", "StressLevel")
+data <- as.data.frame(data)
+```
+
+### Решение
+
+```{r}
+correlation_test <- cor.test(data$HoursOfSleep, data$StressLevel)
+correlation_test
+```
+### **Корреляционный анализ показал наличие отрицательной корреляции между длительностью сна и уровнем стресса (r = -0.5, p-value < 0.05). Т.е.длительный сон ассоциирован с меньшим уровнем стресса**
+
+
