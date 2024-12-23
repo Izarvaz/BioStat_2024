@@ -1,0 +1,116 @@
+
+---
+title: "automatization_notebook"
+output:
+  html_document:
+    df_print: paged
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(readxl)
+```
+
+# Чтение данных
+
+В вашем варианте нужно использовать датасеты cardio_train_big или cardio_train_not_too_big.
+
+```{r}
+data <- read_csv2('data/raw/cardio_train_big.csv')
+head(data)
+summary(data)
+```
+
+# Очистка данных
+
+1) Уберите переменные, в которых пропущенных значений больше 20% или уберите субъектов со слишком большим количеством пропущенных значений. Напишите обоснование, почему вы выбрали тот или иной вариант:
+
+**Обоснование**: В этом случае удаление данных с избытком пропусков предпочтительно, так как это минимизирует потерю полезной информации.
+
+```{r}
+# Проверка пропусков
+missing_info <- colSums(is.na(data)) / nrow(data)
+data <- data %>% select_if(~ mean(is.na(.)) <= 0.2)
+
+# Удаление субъектов с большим количеством пропусков
+data <- na.omit(data)
+```
+
+2) Переименуйте переменные в человекочитаемый вид (что делать с пробелами в названиях?);
+
+```{r}
+data <- data %>% rename(
+  Gender = gender,
+  AgeDays = age,
+  HeightCM = height,
+  WeightKG = weight,
+  CholesterolLevel = cholesterol,
+  GlucoseLevel = gluc
+)
+```
+
+3) В соответствии с описанием данных приведите переменные к нужному типу (numeric или factor);
+
+```{r}
+data <- data %>% mutate(
+  Gender = factor(Gender, levels = c(1, 2), labels = c("Female", "Male")),
+  CholesterolLevel = factor(CholesterolLevel, levels = c(1, 2, 3)),
+  GlucoseLevel = factor(GlucoseLevel, levels = c(1, 2, 3))
+)
+```
+
+4) Отсортируйте данные по возрасту по убыванию;
+
+```{r}
+data <- data %>% arrange(desc(AgeDays))
+```
+
+5) Сохраните в файл outliers.csv субъектов, которые являются выбросами (например, по правилу межквартильного размаха);
+
+```{r}
+Q1 <- quantile(data$HeightCM, 0.25)
+Q3 <- quantile(data$HeightCM, 0.75)
+IQR <- Q3 - Q1
+outliers <- data %>% filter(HeightCM < (Q1 - 1.5 * IQR) | HeightCM > (Q3 + 1.5 * IQR))
+write_csv(outliers, 'outliers.csv')
+```
+
+# Визуализация данных
+
+1) Построить гистограммы для переменных интереса.
+
+```{r}
+ggplot(data, aes(x = HeightCM)) + geom_histogram(bins = 30)
+ggplot(data, aes(x = WeightKG)) + geom_histogram(bins = 30)
+```
+
+2) Построить диаграмму рассеяния для двух выбранных переменных.
+
+```{r}
+ggplot(data, aes(x = HeightCM, y = WeightKG)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "Scatter plot of Height and Weight")
+```
+
+# Модели и прогнозы
+
+1) Построить линейную регрессию или логистическую модель.
+
+```{r}
+model <- glm(cardio ~ HeightCM + WeightKG + Gender, data = data, family = binomial)
+summary(model)
+```
+
+2) Сделать прогноз и оценить качество модели.
+
+```{r}
+predictions <- predict(model, type = "response")
+roc_curve <- pROC::roc(data$cardio, predictions)
+plot(roc_curve)
+```
+
