@@ -1,0 +1,81 @@
+---
+title: "Home_work_lecture_1"
+author: "Zarva_I"
+date: "2024-09-22"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+```
+
+```{r}
+#Чтение файла
+df <- read.csv("data/raw/carrental_id.csv", header = TRUE)
+head(df, 5)
+```
+
+```{r}
+#DF без 1 столбца
+df <- df %>% select(-X)
+head(df, 5)
+```
+
+```{r}
+#Распространенность "опытных"
+prevalence_experience <- sum(df$experience == 1) / nrow(df)
+cat("Распространенность “experience”:", prevalence_experience, "\n")
+```
+
+```{r}
+#Риск “accident” в общей группе, в группе “experience” и в группе без “experience”
+all_risk_accident <- mean(df$accident)
+risk_accident_experience <- sum(df$accident[df$experience == 1] == 1) / sum(df$experience == 1)
+risk_accident_no_experience <- sum(df$accident[df$experience == 0] == 1) / sum(df$experience == 0)
+cat("Общий риск ДТП (accident):", all_risk_accident, "(", (all_risk_accident*100), "%)", "\n")
+cat("Риск ДТП среди водителей со стажем:",  round(risk_accident_experience,2),"(", round(risk_accident_experience*100,2), "%)", "\n")
+cat("Риск ДТП среди водителей без стажа:", round(risk_accident_no_experience,2),"(", round(risk_accident_no_experience*100,2),"%)", "\n")
+```
+```{r}
+#Присоединяем столбец с временем аренды
+df <- df %>% mutate(rent_time = stop - start)
+head(df, 5)
+```
+
+
+
+```{r}
+#incidence_rate(All), incidence_rate(experience), incidence_rate(no experience)
+
+IR_all <- sum(df$accident) / sum(df$rent_time)
+IR_exp <- sum(df$accident[df$experience == 1]) / sum(df$rent_time[df$experience == 1])
+IR_no_exp <- sum(df$accident[df$experience == 0]) / sum(df$rent_time[df$experience == 0])
+
+cat("Общая инцидентность (ДТПшность):", round(IR_all, 4), "\n")
+cat("Инцидентность среди водителей со стажем:", round(IR_exp,4), "\n")
+cat("Инцидентность среди водителей без стажа:", round(IR_no_exp,4), "\n")
+```
+#**Конклюжнъ**
+
+#Распространенность "experience" - 32% пользователей сервиса имеют водительский стаж; 
+
+#Риск "accident": общий - 22% вероятности того, что любой арендованный автомобиль попадет в ДТП, группа “experience” - 9,38% вероятности того, что автомобиль с "опытным" водителем попадет в ДТП, группа “no_experience” - 27.94% вероятности того, что автомобиль с "неопытным" водителем попадет в ДТП, что значительно превышает риск у водителя, имеющего опыт вождения. 
+
+#Плотность событий (incidence rate) в общей группе - 0.003 означает, что произойдут примерно 3 аварии на каждые 1000 дней аренды.
+
+#IR среди водителей со стажем - 0.00318; 
+
+#IR среди водителей без стажа - 0.00303 Показатель ниже, чем у "опытных" водителей. Это доказывает использование показателей инцидентности является более оправданным для поиска "группы риска".
+
+#Примечание
+
+#Использование информации об id заказа, водителя и транспорта (и другой) в оценке риска ДТП может быть использовано для выявления некоторых зависимостей. Например, длительности аренды перед ДТП, составления вероятного портрета рискованного водителя, наличия скрытых неисправностей авто и др. Я уверен, что это и многое другое уже интегрировано в систему оценки рисков ДТП при аренде.
+
+
+```{r}
+
+```

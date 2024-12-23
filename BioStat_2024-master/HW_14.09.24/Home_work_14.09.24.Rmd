@@ -1,0 +1,180 @@
+---
+title: "Home_Work_14.09.24"
+author: "Zarva_I"
+date: "2024-09-29"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(readr)
+library(dplyr)
+```
+
+
+```{r}
+hogwarts <- read_csv("dayavis_BI_2024/data/hogwarts_2024.csv")
+hogwarts |> head()
+```
+# 1 Столбчатые диаграммы
+
+```{r}
+
+ggplot(hogwarts, aes(x = as.factor(course))) +
+  geom_bar(fill = "#44944A", color = "black") + 
+  theme_bw() +  
+  labs(x = "Номер курса", y = "Число студентов", title = "Распределение студентов по курсам")
+
+```
+# 2 Столбчатые диаграммы
+```{r}
+
+ggplot(hogwarts, aes(x = house, fill = bloodStatus)) +
+  geom_bar(position = "fill", color = "black") +  
+  theme_classic() + 
+  labs(x = "Факультет", y = "Распределение по факультету", fill = "Происхождение", title = "Распределение студентов по факультетам и происхождению")
+
+```
+*На факультете Гриффиндор учится больше всего чистокровных и маглорожденных волшеников. На факультете Слизерин учится больше всего полукровок. Пуффендуй и Когтевран практически не отличаются друг от друга по распределению по происхождению студентов*
+
+# 3 Столбчатые диаграммы
+```{r}
+
+filtered_hogwarts <- hogwarts %>% filter(bloodStatus %in% c("pure-blood", "muggle-born"))
+ggplot(filtered_hogwarts, aes(x = house, fill = bloodStatus)) +
+  geom_bar(position = "fill", color = "black") + 
+  theme_bw() +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "red") +  
+  labs(x = "Факультет", y = "Доля студентов", fill = "Происхождение", title = "Распределение студентов по факультетам и происхождению") +
+  scale_fill_manual(values = c("pure-blood" = "blue", "muggle-born" = "brown"), 
+                    labels = c("pure-blood" = "Чистокровные", "muggle-born" = "Маглорожденные"))
+
+```
+# 1 Боксплот
+```{r}
+ggplot(hogwarts, aes(x = reorder(house, -week_3, FUN = median), y = week_3)) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(x = "Факультет", y = "Баллы на 3-й неделе", title = "Распределение баллов на 3-й неделе по факультетам")
+```
+
+# 2 Боксплот
+```{r}
+
+ggplot(hogwarts, aes(x = reorder(house, -week_3, FUN = median), y = week_3, fill = bloodStatus)) +
+  geom_boxplot(notch = TRUE) +
+  theme_bw() +
+  labs(x = "Факультет", y = "Баллы на 3-й неделе", fill = "Происхождение", title = "Распределение баллов по факультетам и происхождению студентов") +
+  theme_bw()
+
+```
+
+# 3 Боксплот
+```{r}
+
+ggplot(hogwarts, aes(x = reorder(house, -week_3, FUN = median), y = week_3, fill = bloodStatus)) +
+  geom_boxplot(outlier.shape = NA) +  
+  geom_jitter(width = 0.2, alpha = 0.6) +
+  theme_bw() +
+  labs(x = "Факультет", y = "Баллы на 3-й неделе", fill = "Происхождение", 
+       title = "Распределение баллов по факультетам с джиттером", 
+       subtitle = "Данные по баллам студентов на 3-й неделе обучения") +
+  scale_fill_manual(
+    values = c("pure-blood" = "blue", "muggle-born" = "brown", "half-blood" = "green"),
+    labels = c("pure-blood" = "Чистокровные", "muggle-born" = "Маглорожденные", "half-blood" = "Полукровные")
+  ) +
+  theme_bw()
+```
+
+# 1 Разное
+```{r}
+
+fifth_course <- hogwarts %>% filter(course == 5)
+ggplot(fifth_course, aes(x = reorder(id, -result), y = result, color = wandCore)) +
+  geom_segment(aes(xend = reorder(id, -result), yend = 0), color = "grey") +  
+  geom_point(size = 4) +
+  scale_color_manual(
+    values = c("dragon heartstring" = "red", "phoenix feather" = "yellow", "unicorn hair" = "grey"),
+    labels = c("dragon heartstring" = "Сердечная жила дракона", "phoenix feather" = "Перо феникса", "unicorn hair" = "Волос единорога")
+  ) +
+  theme_bw() +
+  labs(x = "ID студента", y = "Итоговый балл", color = "Сердцевина палочки", title = "Леденцовый график итоговых баллов студентов 5-го курса") +
+  theme(
+    aspect.ratio = 1/2,
+    axis.text.x = element_text(size = 5, angle = 90, hjust = 1),
+    plot.title = element_text(size = 20, face = "bold"),
+    axis.title = element_text(size = 18)
+  )
+
+
+```
+# 2 Разное
+```{r}
+
+ggplot(hogwarts, aes(x = `Astronomy exam`, fill = house == "Slytherin")) +
+  geom_histogram(binwidth = 5, color = "black") +
+  scale_fill_manual(values = c("FALSE" = "lightblue", "TRUE" = "green"), labels = c("Non-Slytherin", "Slytherin")) +
+  theme_minimal() +
+  theme(axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 20),
+        legend.text = element_text(size = 18), legend.title = element_text(size = 20)) +
+  labs(x = "Astronomy Exam Score", y = "Number of Students", fill = "House")
+
+```
+# 3 Разное 
+```{r}
+theme_custom <- theme(
+    panel.background = element_rect(fill = "white", color = NA),  
+    plot.background = element_rect(fill = "white", color = NA),   
+    axis.title = element_text(size = 20),  
+    axis.text = element_text(size = 25),   
+    legend.title = element_text(size = 20),  
+    legend.text = element_text(size = 20))
+
+ggplot(hogwarts, aes(x = reorder(house, -week_3, FUN = median), y = week_3, fill = bloodStatus)) +
+  geom_boxplot(outlier.shape = NA, size = 1.2, width = 0.5) +  
+  geom_jitter(width = 0.2, alpha = 0.6) +
+  labs(x = "Факультет", y = "Баллы на 3-й неделе", fill = "Происхождение", 
+       title = "Распределение баллов по факультетам с джиттером") +
+  scale_fill_manual(
+    values = c("pure-blood" = "blue", "muggle-born" = "brown", "half-blood" = "green"),
+    labels = c("pure-blood" = "Чистокровные", "muggle-born" = "Маглорожденные", "half-blood" = "Полукровные")
+  ) +
+  theme_bw()
+  theme_custom
+
+```
+
+#Фасетирование 1
+*Гистограмма: Для гистограммы лучше использовать facet_wrap(), потому что она позволяет создать компактную сетку графиков, распределяя графики по размеру, если количество категорий.*
+
+*Violin-plot: Для violin-плота лучше использовать facet_grid(), так как при группировке данных по строкам и столбцам можно лучше контролировать распределение графиков, особенно если нам нужно разделить графики по двум переменным.*
+
+#Фасетирование 2
+```{r}
+# 
+ggplot(hogwarts, aes(x = `Transfiguration exam`)) +
+  geom_histogram(binwidth = 10, fill = "lightblue", color = "black") +
+  facet_wrap(~ course, ncol = 2) +
+  theme_minimal() +
+  theme(aspect.ratio = 1/2)
+  labs(x = "Баллы за экзамен по трансфигурации", y = "Количество студентов", title = "Распределение баллов за экзамен по трансфигурации по курсам")
+
+```
+#Фасетирование 3
+```{r}
+ggplot(hogwarts) +
+  geom_density(aes(x = `Defence against the dark arts exam`, fill = "Защита от тёмных искусств"), alpha = 0.5) +
+  geom_density(aes(x = `Herbology exam`, fill = "Травология"), alpha = 0.5) +
+  facet_wrap(~ sex) +  
+  theme_bw() +
+  scale_fill_manual(
+    values = c("Защита от тёмных искусств" = "blue", "Травология" = "green"),
+    labels = c("Защита от тёмных искусств" = "Защита от тёмных искусств", "Травология" = "Травология")
+  ) +
+  labs(x = "Баллы за экзамен", y = "Плотность", fill = "Экзамен", title = "Плотность распределения баллов за экзамены по полу")
+
+```
+
