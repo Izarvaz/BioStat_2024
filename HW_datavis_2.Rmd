@@ -1,0 +1,352 @@
+---
+title: "HW_datavis_2"
+author: "Zarva_I"
+date: "2024-12-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#Загрузка библиотек
+library(tidyverse)
+library(ggpubr)
+```
+
+```{r}
+# Загрузка данных
+data <- read.csv("data/raw/hogwarts_2024.csv")
+str(data)
+```
+
+# Диаграммы рассеяния (скаттерплоты)
+```{r}
+scatter_plot <- ggplot(data, aes(x = result, y = `Herbology.exam`)) +
+  geom_point(color = "blue", size = 2) +
+  geom_smooth(method = "lm", se = FALSE, color = "red", linetype = "dashed") +
+  labs(
+    title = "Связь между суммарным баллом за год и оценкой за травологию",
+    x = "Суммарный балл за год",
+    y = "Оценка за экзамен по травологии"
+  ) +
+  theme_minimal(base_size = 14)
+print(scatter_plot)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+faculty_colors <- c(
+  "Ravenclaw" = "blue",
+  "Hufflepuff" = "gold",
+  "Gryffindor" = "red",
+  "Slytherin" = "green"
+)
+data$house <- factor(data$house, levels = names(faculty_colors))
+plot(
+  data$result, data$`Herbology.exam`,
+  col = faculty_colors[data$house],
+  pch = 16,
+  main = "Herbology Exam",
+  xlab = "Суммарный балл за год",
+  ylab = "Оценка за экзамен"
+)
+abline(lm(`Herbology.exam` ~ result, data = data), col = "black", lty = 2)
+
+plot(
+  data$result, data$`Muggle studies exam`,
+  col = faculty_colors[data$house],
+  pch = 16,
+  main = "Muggle Studies Exam",
+  xlab = "Суммарный балл за год",
+  ylab = "Оценка за экзамен"
+)
+abline(lm(`Muggle.studies.exam` ~ result, data = data), col = "black", lty = 2)
+
+plot(
+  data$result, data$`Divinations.exam`,
+  col = faculty_colors[data$house],
+  pch = 16,
+  main = "Divinations Exam",
+  xlab = "Суммарный балл за год",
+  ylab = "Оценка за экзамен"
+)
+abline(lm(`Divinations.exam` ~ result, data = data), col = "black", lty = 2)
+
+plot(
+  data$result, data$`Potions.exam`,
+  col = faculty_colors[data$house],
+  pch = 16,
+  main = "Potions Exam",
+  xlab = "Суммарный балл за год",
+  ylab = "Оценка за экзамен"
+)
+abline(lm(`Potions.exam` ~ result, data = data), col = "black", lty = 2)
+par(mfrow = c(1, 1))
+```
+
+```{r}
+par(mfrow = c(2, 2))
+
+faculty_colors <- c(
+  "Ravenclaw" = "blue",
+  "Hufflepuff" = "gold",
+  "Gryffindor" = "red",
+  "Slytherin" = "green"
+)
+data$house <- factor(data$house, levels = names(faculty_colors))
+
+plot(
+  data$result, data$`Herbology.exam`,
+  col = faculty_colors[data$house],
+  pch = 16,
+  main = "Herbology Exam",
+  xlab = "Суммарный балл за год",
+  ylab = "Оценка за экзамен"
+)
+for(house in levels(data$house)) {
+  abline(lm(`Herbology.exam` ~ result, data = data[data$house == house, ]),
+         col = faculty_colors[house], lty = 2)
+}
+
+plot(
+  data$result, data$`Muggle.studies.exam`,
+  col = faculty_colors[data$house],
+  pch = 16,
+  main = "Muggle Studies Exam",
+  xlab = "Суммарный балл за год",
+  ylab = "Оценка за экзамен"
+)
+for(house in levels(data$house)) {
+  abline(lm(`Muggle.studies.exam` ~ result, data = data[data$house == house, ]),
+         col = faculty_colors[house], lty = 2)
+}
+
+plot(
+  data$result, data$`Divinations.exam`,
+  col = faculty_colors[data$house],
+  pch = 16,
+  main = "Divinations Exam",
+  xlab = "Суммарный балл за год",
+  ylab = "Оценка за экзамен"
+)
+for(house in levels(data$house)) {
+  abline(lm(`Divinations.exam` ~ result, data = data[data$house == house, ]),
+         col = faculty_colors[house], lty = 2)
+}
+
+plot(
+  data$result, data$`Potions.exam`,
+  col = faculty_colors[data$house],
+  pch = 16,
+  main = "Potions Exam",
+  xlab = "Суммарный балл за год",
+  ylab = "Оценка за экзамен"
+)
+for(house in levels(data$house)) {
+  abline(lm(`Potions.exam` ~ result, data = data[data$house == house, ]),
+         col = faculty_colors[house], lty = 2)
+}
+par(mfrow = c(1, 1))
+```
+# geom_col и вещи вокруг него
+
+```{r}
+# Преобразование данных: суммирование баллов по неделям (1-17)
+data_long <- data %>%
+  select(bloodStatus, starts_with("week_")) %>%
+  pivot_longer(
+    cols = starts_with("week_"),
+    names_to = "week",
+    values_to = "score"
+  ) %>%
+  mutate(week = as.numeric(str_extract(week, "\\d+"))) %>%
+  filter(week <= 17)
+
+# Построение графика: распределение баллов по неделям и происхождению
+barplot_weeks <- data_long %>%
+  group_by(bloodStatus, week) %>%
+  summarise(total_score = sum(score, na.rm = TRUE)) %>%
+  ggplot(aes(x = week, y = total_score, fill = bloodStatus)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Распределение баллов по неделям и происхождению",
+    x = "Неделя",
+    y = "Суммарный балл",
+    fill = "Происхождение"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(barplot_weeks)
+
+```
+## Полукровкам в мире ГП приходилось постоянно доказывать свой уровень владения магией, поэтому они учились прилежнее заносчивых чистокровок. Скорее всего, всю эту статистику по баллам тащила Гермиона. 
+
+```{r}
+ranked_data_long <- data %>%
+  select(bloodStatus, sex, starts_with("week_")) %>%
+  pivot_longer(
+    cols = starts_with("week_"),
+    names_to = "week",
+    values_to = "score"
+  ) %>%
+  mutate(week = as.numeric(str_extract(week, "\\d+"))) %>%
+  filter(week <= 17) %>%
+  group_by(week) %>%
+  mutate(total_score_week = sum(score, na.rm = TRUE)) %>%
+  ungroup() %>%
+  arrange(desc(total_score_week), week)
+
+# Построение графика: распределение баллов по неделям и происхождению с числом студентов
+barplot_ranked_weeks <- ranked_data_long %>%
+  group_by(bloodStatus, week) %>%
+  summarise(
+    total_score = sum(score, na.rm = TRUE),
+    student_count = n()
+  ) %>%
+  ggplot(aes(x = reorder(factor(week), -total_score), y = total_score, fill = bloodStatus)) +
+  geom_col(position = position_dodge()) +
+  geom_label(aes(label = student_count),
+             position = position_dodge(width = 0.9),
+             size = 3) +
+  labs(
+    title = "Распределение баллов по ранжированным неделям и происхождению",
+    x = "Неделя (ранжирована)",
+    y = "Суммарный балл",
+    fill = "Происхождение"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(barplot_ranked_weeks)
+
+```
+
+```{r}
+barplot_with_gender <- ranked_data_long %>%
+  group_by(bloodStatus, sex, week) %>%
+  summarise(
+    total_score = sum(score, na.rm = TRUE),
+    student_count = n()
+  ) %>%
+  ggplot(aes(x = reorder(factor(week), -total_score), y = total_score, fill = bloodStatus)) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  scale_y_continuous(
+    breaks = seq(0, max(ranked_data_long$total_score_week, na.rm = TRUE), by = 1000),
+    expand = expansion(mult = c(0, 0.1))
+  ) +
+  labs(
+    title = "Распределение баллов по неделям, происхождению и полу",
+    x = "Неделя (ранжирована)",
+    y = "Суммарный балл",
+    fill = "Происхождение"
+  ) +
+  facet_wrap(~ sex, scales = "free_y") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top",
+    panel.spacing = unit(1, "lines")
+  )
+
+# Сохранение графика
+ggsave("barplot_with_gender.png", barplot_with_gender, width = 12, height = 8)
+
+print(barplot_with_gender)
+
+```
+
+```{r}
+barplot_horizontal <- barplot_with_gender + coord_flip() +
+  labs(title = "Распределение баллов по неделям, происхождению и полу (горизонтально)")
+
+
+print(barplot_horizontal)
+```
+
+
+## Функция coord_flip() в ggplot2 используется для смены ориентации графика. Это полезно, когда производится оценка множества категорий.
+
+# Разное
+
+```{r}
+# Задание 1: Сравнение распределений по зельеварению и древним рунам
+
+plot1 <- ggplot(data, aes(x = `Potions.exam`, fill = "Potions")) +
+  geom_histogram(binwidth = 5, alpha = 0.6, position = "identity", fill = "blue") +
+  labs(
+    title = "Баллы за зельеварение",
+        x = "Баллы",
+    y = "Количество студентов"
+  ) +
+  theme_minimal()
+
+plot2 <- ggplot(data, aes(x = `Study.of.ancient.runes.exam`, fill = "Runes")) +
+  geom_histogram(binwidth = 5, alpha = 0.6, position = "identity", fill = "green") +
+  labs(
+    title = "Баллы за древние руны",
+    x = "Баллы",
+    y = "Количество студентов"
+  ) +
+  theme_minimal()
+
+plot3 <- ggplot(data, aes(x = "Potions", y = `Potions.exam`, fill = "Potions")) +
+  geom_boxplot(fill = "blue", alpha = 0.6) +
+  geom_boxplot(aes(x = "Runes", y = `Study.of.ancient.runes.exam`, fill = "Runes"), fill = "green", alpha = 0.6) +
+  labs(
+    title = "Сравнение распределений по боксплотам",
+    x = "Предмет",
+    y = "Баллы"
+  ) +
+  theme_minimal()
+
+plot4 <- ggplot() +
+  geom_density(data = data, aes(x = `Potions.exam`, color = "Potions"), size = 1, fill = "blue", alpha = 0.3) +
+  geom_density(data = data, aes(x = `Study.of.ancient.runes.exam`, color = "Runes"), size = 1, fill = "green", alpha = 0.3) +
+  labs(
+    title = "Сравнение плотностей",
+    x = "Баллы",
+    y = "Плотность"
+  ) +
+  theme_minimal()
+
+# Объединение графиков
+combined_plot <- ggarrange(plot1, plot2, plot3, plot4, ncol = 2, nrow = 2, heights = c(1, 1))
+
+print(combined_plot)
+
+# Задание 2: Средний балл по зельеварению по происхождению
+average_plot <- data %>%
+  group_by(bloodStatus) %>%
+  summarise(mean_score = mean(`Potions.exam`, na.rm = TRUE)) %>%
+  mutate(bloodStatus = fct_relevel(bloodStatus, "маглорожденные", "чистокровные", "полукровки")) %>%
+  ggplot(aes(x = bloodStatus, y = mean_score, fill = bloodStatus)) +
+  geom_col() +
+  labs(
+    title = "Средний балл по зельеварению по происхождению",
+    x = "Происхождение",
+    y = "Средний балл"
+  ) +
+  theme_minimal()
+
+print(average_plot)
+
+distribution_plot <- ggplot(data, aes(x = `Potions.exam`, fill = bloodStatus)) +
+  geom_density(alpha = 0.5) +
+  labs(
+    title = "Распределение баллов по зельеварению",
+    x = "Баллы",
+    y = "Плотность"
+  ) +
+  theme_minimal()
+
+
+final_combined_plot <- ggarrange(average_plot, distribution_plot, ncol = 1, nrow = 2, align = "hv")
+print(final_combined_plot)
+```
+
+
+
+
