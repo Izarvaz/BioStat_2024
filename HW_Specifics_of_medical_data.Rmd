@@ -1,0 +1,155 @@
+---
+title: "Specifics_of_medical_data"
+author: "Zarva_I"
+date: "2024-12-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(gtsummary)
+library(rstatix)
+library(pROC)
+```
+
+## Загрузка данных
+
+```{r}
+# Загрузка файла
+file_path <- "data/raw/trauma.xlsx"
+data <- read_excel(file_path)
+
+data %>% 
+  select(1:5) %>% 
+  head()
+```
+
+## 1. Описательная статистика
+
+```{r}
+# Описательная статистика для переменных
+data <- data %>%
+  mutate(Height = gsub("\"", "", Height),
+         Height = as.numeric(Height))    
+
+data_summary <- data %>%
+  select(-Name) %>%  # В исследовании мы можем работать с id и деперсонализировать данные 
+  tbl_summary()
+data_summary
+
+# Расчет снижения уровня гемоглобина
+low_hb <- data %>% 
+  mutate(
+    low_hb = case_when(
+      Sex == "Male" & Hb < 13.5 ~ 1,
+      Sex == "Female" & Hb < 12 ~ 1,
+      TRUE ~ 0
+    )
+  )
+
+low_hb_summary <- low_hb %>% 
+  summarise(
+    n_low_hb = sum(low_hb),
+    percent_low_hb = mean(low_hb) * 100
+  )
+low_hb_summary
+```
+
+```{r}
+# Промежуточная проверка типов данных
+str(data)
+```
+
+## 2. Расчет ИМТ
+
+```{r}
+# Перевод единиц измерения в метрическую и кг
+height_m <- data$Height * 0.0254
+weight_kg <- data$Weight / 2.2
+
+data <- data %>% 
+  mutate(BMI = weight_kg / (height_m^2))
+
+# Средний уровень ИМТ
+bmi_stats <- data %>% 
+  summarise(
+    mean_bmi = mean(BMI, na.rm = TRUE),
+    sd_bmi = sd(BMI, na.rm = TRUE),
+    obesity_rate = mean(BMI > 30, na.rm = TRUE) * 100
+  )
+bmi_stats
+```
+```{r}
+# Промежуточная проверка типов данных
+str(height_m)
+str(weight_kg)
+```
+
+
+
+## 3. ROC-анализ для предсказания летального исхода по уровню гемоглобина
+
+```{r}
+# ROC-кривая для Hb
+roc_hb <- roc(data$Death ~ data$Hb, ci = TRUE)
+roc_hb
+
+# Построение графика ROC-кривой
+plot(roc_hb, main = "ROC-кривая для уровня Hb")
+```
+
+## 4. Расчет площади под ROC-кривой и доверительный интервал
+
+```{r}
+# Площадь под ROC-кривой и 95% ДИ
+auc_hb <- roc_hb$auc
+ci_hb <- roc_hb$ci
+auc_hb
+ci_hb
+```
+
+## 5. Расчет оптимального порогового значения по шкале Глазго
+
+```{r}
+# Построение ROC-кривой
+roc_gsc <- roc(data$Death ~ data$GSC, ci = TRUE)
+
+# Получение оптимального порога и его метрик
+optimal_threshold <- coords(roc_gsc, x = "best", best.method = "closest.topleft", ret = c("threshold", "sensitivity", "specificity"))
+
+# Вывод результатов
+print(optimal_threshold)
+```
+
+## 6. Сравнение AUC для переменных
+
+```{r}
+# Расчет AUC для всех количественных переменных
+quant_vars <- c("Hb", "BMI", "Age", "SBP", "DBP", "FOUR", "GSC")
+
+auc_results <- map_dfr(
+  quant_vars, 
+  ~ {
+    roc_result <- roc(data$Death ~ data[[.x]], ci = TRUE)
+    tibble(
+      variable = .x,
+      AUC = as.numeric(roc_result$auc),        # Преобразование AUC в число
+      AUC_LCL = as.numeric(roc_result$ci[1]), # Нижний доверительный интервал
+      AUC_UCL = as.numeric(roc_result$ci[3])  # Верхний доверительный интервал
+    )
+  }
+)
+
+auc_results %>% arrange(desc(AUC))  # Сортировка по убыванию AUC
+
+```
+
+# Результаты:
+# 1) Шкала FOUR и GSC имеют большую плозадь под кривой (0.93 и 0.91, соответственно), это означает, что эти папрметры лучше всего предсказывают вероятность летального исхода, так как они отражают уровень неврологического состояния пациента.
+# 2) Артериальное давление может быть связано с исходом, но не является столь надежным маркером, как шкалы оценки состояния сознания
+# 3) Возраст и индекс массы тела не являются значимыми предикторами летального исхода в данном исследовании
