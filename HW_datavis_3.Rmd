@@ -1,0 +1,172 @@
+---
+title: "HW_datavis_3"
+author: "Zarva_I"
+date: "2024-12-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(rstatix)
+library(readr)
+library(GGally)
+library(ggfortify)
+library(pheatmap)
+library(reshape2)
+```
+
+# 1. Загрузка датасета. Удаление колонок с пропусками >100
+```{r}
+
+dataset_path <- "data/raw/very_low_birthweight.RDS"
+data <- readRDS(dataset_path)
+
+data_cleaned <- data
+
+
+missing_counts <- colSums(is.na(data_cleaned))
+
+columns_to_keep <- names(missing_counts[missing_counts <= 100])
+data_cleaned <- data_cleaned[, columns_to_keep]
+
+data_cleaned <- na.omit(data_cleaned)
+
+
+categorical_columns <- sapply(data_cleaned, is.character)
+for (col in names(categorical_columns[categorical_columns])) {
+  data_cleaned[[col]] <- as.factor(data_cleaned[[col]])
+}
+
+print("Размер очищенного датасета:")
+print(dim(data_cleaned))
+
+str(data_cleaned)
+
+saveRDS(data_cleaned, file = "very_low_birthweight_cleaned.RDS")
+
+```
+
+# 2. Построение графиков плотности распределения. Удаление выбросов. проеборазование переменных 
+# для датасета data_clean
+
+```{r}
+# Преобразуем категориальные переменные в факторы
+final_data <- final_data %>% mutate(across(where(is.character), as.factor))
+
+# Построим графики плотности распределения для числовых переменных
+numeric_vars <- final_data %>% select(where(is.numeric))
+for (var in names(numeric_vars)) {
+  print(
+    ggplot(final_data, aes_string(x = var)) +
+      geom_density(fill = "blue", alpha = 0.5) +
+      ggtitle(paste("Плотность распределения переменной", var)) +
+      theme_minimal()
+  )
+}
+
+# Удаление выбросов с использованием IQR
+remove_outliers <- function(data, cols) {
+  for (col in cols) {
+    Q1 <- quantile(data[[col]], 0.25)
+    Q3 <- quantile(data[[col]], 0.75)
+    IQR <- Q3 - Q1
+    lower_bound <- Q1 - 1.5 * IQR
+    upper_bound <- Q3 + 1.5 * IQR
+    data <- data %>% filter(data[[col]] >= lower_bound & data[[col]] <= upper_bound)
+  }
+  return(data)
+}
+
+final_data <- remove_outliers(final_data, names(numeric_vars))
+
+# Построим графики плотности для birth и exit, раскрасив их по переменной inout
+if ("birth" %in% names(final_data) & "exit" %in% names(final_data) & "inout" %in% names(final_data)) {
+  print(
+    ggplot(final_data, aes(x = birth, fill = as.factor(inout))) +
+      geom_density(alpha = 0.5) +
+      ggtitle("Плотность распределения переменной birth с учетом inout") +
+      theme_minimal() +
+      scale_fill_discrete(name = "inout")
+  )
+
+  print(
+    ggplot(final_data, aes(x = exit, fill = as.factor(inout))) +
+      geom_density(alpha = 0.5) +
+      ggtitle("Плотность распределения переменной exit с учетом inout") +
+      theme_minimal() +
+      scale_fill_discrete(name = "inout")
+  )
+}
+
+# Сохраним очищенные данные для дальнейшего анализа
+saveRDS(final_data, "cleaned_very_low_birthweight.RDS")
+```
+
+
+# 3 
+## Согласно ЦПТ при достаточной выборке мы можем использовать т-тест Стьюдента
+```{r}
+test_result <- data_cleaned %>%
+  t_test(lowph ~ inout)
+
+print(test_result)
+
+data_cleaned %>%
+  ggboxplot(x = "inout", y = "lowph", add = "jitter", 
+            title = "Сравнение lowph между группами inout")
+
+```
+
+## У пациентов группы transported более низкая выживаемость. Скорее всего сказывается на необходимость в транспортивке более тяжелых пациентов и условия трансопртировки (+время)
+
+# 4. Кор тест, хитмэп
+```{r}
+excluded_columns <- c("birth", "year", "exit")
+numeric_data <- data %>%
+  select(where(is.numeric)) %>%
+  select(-one_of(excluded_columns))
+
+cor_matrix <- cor(numeric_data, use = "complete.obs")
+
+melted_cor <- melt(cor_matrix)
+ggplot(melted_cor, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
+  theme_minimal() +
+  labs(title = "Корреляционная тепловая карта", x = NULL, y = NULL)
+
+ggpairs(numeric_data, title = "Парные зависимости между переменными")
+```
+
+
+```{r}
+
+excluded_columns <- c("birth", "year", "exit")
+numeric_data <- data[, sapply(data, is.numeric)]
+numeric_data <- numeric_data[, !colnames(numeric_data) %in% excluded_columns]
+
+very_low_birthweight_scaled <- scale(numeric_data)
+
+very_low_birthweight_dist <- dist(very_low_birthweight_scaled)
+
+pheatmap(very_low_birthweight_scaled, 
+         show_rownames = FALSE, 
+         clustering_distance_rows = very_low_birthweight_dist,
+         clustering_distance_cols = "euclidean", # Можно изменить, если требуется другой метод
+         clustering_method = "ward.D2", 
+         cutree_rows = 5, 
+         cutree_cols = 5,
+         angle_col = 45, 
+         main = "Heatmap with Dendrograms for Hierarchical Clustering")
+```
+
+```{r}
+
+```
+
+
