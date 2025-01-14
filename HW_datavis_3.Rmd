@@ -2,171 +2,189 @@
 title: "HW_datavis_3"
 author: "Zarva_I"
 date: "2024-12-29"
-output: html_document
+output:
+  html_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, results = 'show')
 ```
 
 ```{r}
 library(dplyr)
 library(ggplot2)
-library(rstatix)
-library(readr)
-library(GGally)
-library(ggfortify)
-library(pheatmap)
-library(reshape2)
+theme_set(theme_minimal())
+library(ggpubr)
+
+library(factoextra)
+library(FactoMineR)
+library(ggbiplot)
+library(corrplot)
+library(tidyverse)
+library(devtools)
+if(!requireNamespace("ggbiplot", quietly = TRUE)) {
+  devtools::install_github("vqv/ggbiplot")
+}
 ```
 
 # 1. Загрузка датасета. Удаление колонок с пропусками >100
 ```{r}
 
-dataset_path <- "data/raw/very_low_birthweight.RDS"
-data <- readRDS(dataset_path)
+df <- "data/raw/very_low_birthweight.RDS"
+data <- readRDS(df)
 
-data_cleaned <- data
+#удаление колонок с пропусками >100 и строк с NA
 
+data_clear <- data %>% 
+  select(where(~ sum(is.na(.)) <= 100)) 
 
-missing_counts <- colSums(is.na(data_cleaned))
+data_clear <- data_clear %>% 
+  drop_na()
 
-columns_to_keep <- names(missing_counts[missing_counts <= 100])
-data_cleaned <- data_cleaned[, columns_to_keep]
-
-data_cleaned <- na.omit(data_cleaned)
-
-
-categorical_columns <- sapply(data_cleaned, is.character)
-for (col in names(categorical_columns[categorical_columns])) {
-  data_cleaned[[col]] <- as.factor(data_cleaned[[col]])
-}
-
-print("Размер очищенного датасета:")
-print(dim(data_cleaned))
-
-str(data_cleaned)
-
-saveRDS(data_cleaned, file = "very_low_birthweight_cleaned.RDS")
+print(dim(data))
+print(dim(data_clear))
+str(data_clear)
 
 ```
 
-# 2. Построение графиков плотности распределения. Удаление выбросов. проеборазование переменных 
-# для датасета data_clean
+# 2. Построение графиков плотности распределения. Удаление выбросов. проеборазование переменных для датасета final_data
 
 ```{r}
-# Преобразуем категориальные переменные в факторы
-final_data <- final_data %>% mutate(across(where(is.character), as.factor))
 
-# Построим графики плотности распределения для числовых переменных
-numeric_vars <- final_data %>% select(where(is.numeric))
-for (var in names(numeric_vars)) {
-  print(
-    ggplot(final_data, aes_string(x = var)) +
-      geom_density(fill = "blue", alpha = 0.5) +
-      ggtitle(paste("Плотность распределения переменной", var)) +
-      theme_minimal()
-  )
-}
+data_clear_cor <- data_clear %>%
+  select(is.integer | is.numeric)
+  
+str(data_clear_cor)
 
-# Удаление выбросов с использованием IQR
-remove_outliers <- function(data, cols) {
-  for (col in cols) {
-    Q1 <- quantile(data[[col]], 0.25)
-    Q3 <- quantile(data[[col]], 0.75)
-    IQR <- Q3 - Q1
-    lower_bound <- Q1 - 1.5 * IQR
-    upper_bound <- Q3 + 1.5 * IQR
-    data <- data %>% filter(data[[col]] >= lower_bound & data[[col]] <= upper_bound)
-  }
-  return(data)
-}
+data_clear_cor <- cor(data_clear_cor)
+data_clear_cor
 
-final_data <- remove_outliers(final_data, names(numeric_vars))
+corrplot(data_clear_cor, method = "color", type = "lower", 
+         addCoef.col = "grey30", diag = FALSE,
+         cl.pos = "b", tl.col = "grey10",
+         col = COL2('RdBu', 10))
 
-# Построим графики плотности для birth и exit, раскрасив их по переменной inout
-if ("birth" %in% names(final_data) & "exit" %in% names(final_data) & "inout" %in% names(final_data)) {
-  print(
-    ggplot(final_data, aes(x = birth, fill = as.factor(inout))) +
-      geom_density(alpha = 0.5) +
-      ggtitle("Плотность распределения переменной birth с учетом inout") +
-      theme_minimal() +
-      scale_fill_discrete(name = "inout")
-  )
 
-  print(
-    ggplot(final_data, aes(x = exit, fill = as.factor(inout))) +
-      geom_density(alpha = 0.5) +
-      ggtitle("Плотность распределения переменной exit с учетом inout") +
-      theme_minimal() +
-      scale_fill_discrete(name = "inout")
-  )
-}
+library(corrr)
+data_clear_cor %>% 
+  network_plot(min_cor = .25)
 
-# Сохраним очищенные данные для дальнейшего анализа
-saveRDS(final_data, "cleaned_very_low_birthweight.RDS")
+library(GGally)
+ggpairs(data_clear_cor, progress = F)
+
+final_data <- data_clear %>% mutate(across(where(is.character), as.factor))
+str(final_data)
+
+```
+```{r}
+final_data_HM <- final_data %>%
+  select_if(is.numeric)
+  
+str(final_data_HM)
+final_data_HM <- scale(final_data_HM)
+head(final_data_HM)
+
+library(ggfortify) 
+
+autoplot(final_data_HM)
+
+library(pheatmap)
+
+final_data_HM_dist <- dist(final_data_HM)
+
+
+pheatmap(final_data_HM, 
+         show_rownames = FALSE, 
+         clustering_distance_rows = final_data_HM_dist,
+         clustering_method = "ward.D2", 
+         cutree_rows = 5,
+         cutree_cols = length(colnames(final_data_HM)),
+         angle_col = 90, 
+         main = "Dendrograms for clustering rows and columns with heatmap")
+
+```
+
+##Кластеризация выполнена на 5 групп. На первый взгляд распределение данных досататочно гомогенно. Обращает на себя выделение 1 кластера, по-видимому с "+" резульатом столбца "dead".
+
+```{r}
+data_graph <- ggplot() +
+  geom_point(data = data_clear, aes(x = gest, y = bwt, color = inout)) +
+  theme_minimal()
+data_graph
 ```
 
 
-# 3 
-## Согласно ЦПТ при достаточной выборке мы можем использовать т-тест Стьюдента
+
+# 3 Тест на сравнение значений
 ```{r}
-test_result <- data_cleaned %>%
+library(rstatix)
+
+test_result <- data_clear %>%
   t_test(lowph ~ inout)
 
 print(test_result)
 
-data_cleaned %>%
-  ggboxplot(x = "inout", y = "lowph", add = "jitter", 
-            title = "Сравнение lowph между группами inout")
-
 ```
 
-## У пациентов группы transported более низкая выживаемость. Скорее всего сказывается на необходимость в транспортивке более тяжелых пациентов и условия трансопртировки (+время)
-
-# 4. Кор тест, хитмэп
-```{r}
-excluded_columns <- c("birth", "year", "exit")
-numeric_data <- data %>%
-  select(where(is.numeric)) %>%
-  select(-one_of(excluded_columns))
-
-cor_matrix <- cor(numeric_data, use = "complete.obs")
-
-melted_cor <- melt(cor_matrix)
-ggplot(melted_cor, aes(Var1, Var2, fill = value)) +
-  geom_tile() +
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
-  theme_minimal() +
-  labs(title = "Корреляционная тепловая карта", x = NULL, y = NULL)
-
-ggpairs(numeric_data, title = "Парные зависимости между переменными")
-```
+## У пациентов группы transported более низкая выживаемость. Скорее всего сказывается  необходимость в транспортивке более тяжелых пациентов и условия трансопртировки (+время)
 
 
 ```{r}
+data_clear_PCA <- data_clear %>%
+  select(lowph, apg1)
+data.pca <- prcomp(data_clear_PCA, 
+                scale = T)
 
-excluded_columns <- c("birth", "year", "exit")
-numeric_data <- data[, sapply(data, is.numeric)]
-numeric_data <- numeric_data[, !colnames(numeric_data) %in% excluded_columns]
+data.pca$rotation
 
-very_low_birthweight_scaled <- scale(numeric_data)
-
-very_low_birthweight_dist <- dist(very_low_birthweight_scaled)
-
-pheatmap(very_low_birthweight_scaled, 
-         show_rownames = FALSE, 
-         clustering_distance_rows = very_low_birthweight_dist,
-         clustering_distance_cols = "euclidean", # Можно изменить, если требуется другой метод
-         clustering_method = "ward.D2", 
-         cutree_rows = 5, 
-         cutree_cols = 5,
-         angle_col = 45, 
-         main = "Heatmap with Dendrograms for Hierarchical Clustering")
+ggplot() +
+  geom_point(data = data.pca$x, # Новые переменные лежат здесь
+             aes(x = PC1, y = PC2)) +
+  theme_minimal() 
 ```
 
 ```{r}
+library(FactoMineR)
 
+data_clear_PCA_full <- prcomp(final_data_HM, 
+                scale = T)
+
+summary(data_clear_PCA_full)
+fviz_eig(data_clear_PCA_full, addlabels = T, ylim = c(0, 40))
+fviz_pca_var(data_clear_PCA_full, col.var = "contrib")
+fviz_contrib(data_clear_PCA_full, choice = "var", axes = 1, top = 24) # 1
+fviz_contrib(data_clear_PCA_full, choice = "var", axes = 2, top = 24) # 2
+fviz_contrib(data_clear_PCA_full, choice = "var", axes = 3, top = 24) # 3
 ```
 
+
+```{r}
+#КОД РАБОТАЕТ, НО ПРОБЛЕМА С НИТИРОВАНИЕМ
+
+#library(ggbiplot)
+#print(ggbiplot(data_clear_PCA_full, 
+#         alpha = 0.1, 
+#         scale = 0,
+#         labels = NULL) +
+#  theme_minimal())
+
+library(factoextra)
+fviz_pca_biplot(data_clear_PCA_full, 
+                label = "var", 
+                col.var = "blue", 
+                col.ind = "red")
+```
+
+```{r}
+library(plotly)
+plot_ly(data = data_clear, 
+            x=~apg1, 
+            y=~bwt, 
+            z=~gest, 
+            size = 1,
+            type="scatter3d", mode="markers")
+```
+
+## Алгоритм PCA не ассоциирует данные с категориальными переменными, т.е. не производит классификацию. В данном датасете охват 75% данных производится лишь при использовании шестой главной компоненты, что говорит о том, что стоит найти замену PCA для регуляризации данных, например UMAP.
 
