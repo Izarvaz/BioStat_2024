@@ -1,0 +1,269 @@
+---
+title: <span style="color:blue">"Hb1Ac association analysis"</span>
+author: "Zarva I."
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r, include=FALSE}
+library(readxl)
+library(dplyr)
+library(GGally)
+library(ggplot2)
+library(FactoMineR)
+library(factoextra)
+library(gtsummary)
+library(ggResidpanel)
+library(car)
+library(forestmodel)
+```
+
+## **Общее описание данных:**
+
+#### Датасет содержит 5 доменов с 72 предикторами, включая показатель гликированного гемолгобина (**LBXGH**) в % (далее HbA1c), который будет взят за целевую переменную в регрессионном анализе.Всего наблюдений без пропущенных значений - 916.
+
+## **Выбор предикторов**
+#### Для построения статистической модели регрессии использовался набор следующих предикторов:
+
+#### - Среднее артериальное давление (САД) = 1/3 * Сист АД (**BPXSY**) + 2/3 * Диаст АД (**BPXDI**)
+###### Связь: люди, страдающие избыточным весом = не имеющие постоянной достаточной физической активности, чаще имеют повышенные показатели АД;
+#### - Индекс массы тела - BMI (**BMXBMI**)
+###### Связь: 1) У людей с избыточной массой тела, часто развивается инсулинорезистентность, что приводит к увеличению уровня гликированного гемоглобина; 2) Повышенный риск преддиабета и диабета 2 типа -> высокие значения HbA1; 3) У людей с ожирением изменяется липидный и углеводный обмен; 4) У людей с избыточной массой тела часто ниже уровень физической активности, что снижает чувствительность к инсулину и способствует повышению глюкозы в крови, что опять-таки влияет на уровень HbA1c.5) У людей с избыточной массой тела часто наблюдается высококалорийная диета с высоким содержанием простых углеводов.
+#### - Для оценки физической активности с учетом предикторов, описывающих величину предложена переменная Activity Days Score (ADS) = (5 * PAQ610) + (3 * PAQ625) + (4 * PAQ640) + (5 * PAQ655) + (3 * PAQ670)
+##### Были включены следующие переменные:
+##### - PAQ610 - Количество дней интенсивной работы
+##### - PAQ625 - Количество дней умеренной работы
+##### - PAQ640 - Количество дней ходьбы или езды на велосипеде
+##### - PAQ655 - Дни активного отдыха
+##### - PAQ670 - Количество дней умеренной рекреационной активности
+##### - PAD680 - Минуты сидячей активности
+ 
+```{r, include=FALSE}
+# Чтение файла
+df <- read_xlsx('data/raw/HW_data.xlsx')
+df <- df %>%
+  mutate(
+    RIAGENDR = factor(RIAGENDR, levels = c(1, 2), labels = c("Male", "Female")),
+    DRQSDT4 = factor(DRQSDT4, levels = c(1, 2), labels = c("Yes", "No")),
+    DRQSDT7 = factor(DRQSDT7, levels = c(1, 2), labels = c("Yes", "No")),
+    DIQ010 = factor(DIQ010, levels = c(1, 2), labels = c("Yes", "No")),
+    DIQ070 = factor(DIQ070, levels = c(1, 2), labels = c("Yes", "No"))
+  )
+```
+
+## Анализ распределения целевой переменной
+
+```{r, include=TRUE}
+# Построение boxplot для оценки выбросов
+ggplot(df, aes(y = LBXGH)) +
+  geom_boxplot(outlier.color = "red", outlier.shape = 16, outlier.size = 2) +
+  labs(title = "Диаграмма размаха (Boxplot) для HbA1c",
+       y = "HbA1c") +
+  theme_minimal()
+
+# Построение плотности распределения с визуализацией 95%-квантиля
+quantile_95 <- quantile(df$LBXGH, 0.95, na.rm = TRUE)
+
+ggplot(df, aes(x = LBXGH)) +
+  geom_density(fill = "blue", alpha = 0.5) +
+  geom_vline(xintercept = quantile_95, color = "red", linetype = "dashed", size = 1) +
+  labs(title = "Плотность распределения HbA1c с 95%-квантилем",
+       x = "HbA1c",
+       y = "Плотность") +
+  theme_minimal()
+```
+
+#### Для нивелирования влияния выбросов было принято решение привести их к значению 95 процентиля
+
+```{r, include=TRUE}
+# Создаем новую переменную HbA1cбез выбросов
+df$LBXGH1 <- ifelse(df$LBXGH > quantile_95, quantile_95, df$LBXGH)
+
+# Вывод квантиля и нескольких строк данных
+print(paste("95%-квантиль LBXGH:", quantile_95))
+
+ggplot(df, aes(x = LBXGH1)) +
+  geom_density(fill = "blue", alpha = 0.5) +
+  geom_vline(xintercept = quantile_95, color = "red", linetype = "dashed", size = 1) +
+  labs(title = "Плотность распределения HbA1c с корректировкой выбрсов",
+       x = "HbA1c",
+       y = "Плотность") +
+  theme_minimal()
+```
+
+
+```{r, include=FALSE}
+# Выбор предикторов
+df_pred <- df %>%
+  select(LBXGH1, RIAGENDR, BPXSY, BPXDI, BMXBMI, PAQ610, PAQ625, PAQ640, PAQ655, PAQ670, PAD680, DRQSDT7, DRQSDT4, DIQ070, DIQ010)
+
+# расчёт САД
+df_pred$MeanBP <- round((1/3) * df$BPXSY + (2/3) * df$BPXDI,3)
+
+
+#Расчет индекса общей физической активности (IPA)
+df_pred_IPA <- df_pred %>%
+  mutate(
+    IPA = round((5 * PAQ610) +  # Дни интенсивной работы
+                (3 * PAQ625) +  # Дни умеренной работы
+                (4 * PAQ640) +  # Дни прогулок или езды на велосипеде
+                (5 * PAQ655) +  # Дни интенсивной рекреационной активности
+                (3 * PAQ670) -  # Дни умеренной рекреационной активности
+                (PAD680 / (60 * 24)), 3)
+  ) %>%
+  mutate(
+    IPA = ifelse(IPA < 0, 0, IPA)  # Заменяем отрицательные значения IPA на 0
+  )
+
+
+```
+
+#### Оценка структуры данных
+```{r, include=TRUE}
+#
+head(df_pred)
+
+
+data_cor <- df_pred %>%
+  select(LBXGH1, MeanBP, BPXSY, BPXDI, BMXBMI, PAQ610, PAQ625, PAQ640, PAQ655, PAQ670, PAD680)
+data_cor_m <- cor(data_cor)
+ggpairs(data_cor_m, progress = F)
+
+
+
+
+```
+
+```{r}
+# PCA для всех факторов
+
+df_pred_PCA <- prcomp(data_cor, 
+                scale = T)
+
+summary(df_pred_PCA)
+fviz_eig(df_pred_PCA, addlabels = T, ylim = c(0, 40))
+fviz_pca_var(df_pred_PCA, col.var = "contrib")
+```
+### Наблюдается сильная корреляция некоторых переменных, что может оказать негативный эффект при построении модели. 
+
+```{r}
+# Визуализация
+data_cor_IPA <- df_pred_IPA %>%
+  select(LBXGH1, BMXBMI, MeanBP, IPA)
+data_cor_m_IPA <- cor(data_cor_IPA)
+ggpairs(data_cor_m_IPA, progress = F)
+
+#PCA IPA
+df_pred_IPA_PCA <- prcomp(data_cor_IPA, 
+                scale = T)
+
+summary(df_pred_IPA_PCA)
+fviz_eig(df_pred_IPA_PCA, addlabels = T, ylim = c(0, 40))
+fviz_pca_var(df_pred_IPA_PCA, col.var = "contrib")
+
+```
+
+#### Нам необходимо учитывать, что приём гипогликемических препаратов будет модификатором эффекта физической активность на показатель HbA1c. Для исключения данного эффекта, принято исключить из модели пациентов, принимающих такую терапию (**DIQ070**) (уровень наличия корреляции приёма препаратов и уровня HbA1c. R= -0.917);
+#### Также наличие заболевания Сахарный диабет I типа вне зависимости от уровня физической активности будет предрасполагать к повышению HbA1c, поэтому на этом этапе исследования пациенты, имеющие диагноз СД (**DIQ010**), не будут включены в модель ;
+#### Также необходимо учесть особенности диеты каждого пациента. Пациенты, принимающие диету с низким содержанием/без сахара (**DRQSDT4**) и диабетическую диету (**DRQSDT7**), будут исключены из исследования.
+
+```{r}
+# Фильтрация
+df_pred_IPA_clear <- df_pred_IPA %>%
+  select(LBXGH1, RIAGENDR, BMXBMI, MeanBP, IPA, DRQSDT7, DRQSDT4, DIQ070, DIQ010) %>%
+  filter(
+    DRQSDT7 == "No" &
+    DRQSDT4 == "No" &
+    DIQ070 == "No" &
+    DIQ010 == "No"
+  )
+
+write.csv(df_pred_IPA_clear, 'df_pred_IPA_clear.csv')
+```
+
+
+#### Фитирование модели
+
+### Модель 1 (ИМТ, САД, IPA)
+```{r}
+df_pred_IPA_model_1 <- df_pred_IPA_clear %>%
+  select(LBXGH1, BMXBMI, MeanBP, IPA)
+
+model_1 <- lm(LBXGH1 ~ ., data = df_pred_IPA_model_1)
+summary(model_1)
+tbl_regression(model_1)
+resid_panel(model_1)
+vif_values_1 <- vif(model_1)
+print(vif_values_1)
+forest_model(model_1)
+```
+
+### Модель 2 (САД, IPA)
+```{r}
+df_pred_IPA_model_2 <- df_pred_IPA_clear %>%
+  select(LBXGH1, MeanBP, IPA)
+
+model_2 <- lm(LBXGH1 ~ ., data = df_pred_IPA_model_2)
+summary(model_2)
+tbl_regression(model_2)
+resid_panel(model_2)
+vif_values_2 <- vif(model_2)
+print(vif_values_2)
+forest_model(model_2)
+```
+### Модель 3 (IPA, ИМТ)
+```{r}
+df_pred_IPA_model_3 <- df_pred_IPA_clear %>%
+  select(LBXGH1, BMXBMI, IPA)
+
+model_3 <- lm(LBXGH1 ~ ., data = df_pred_IPA_model_3)
+summary(model_3)
+tbl_regression(model_3)
+resid_panel(model_3)
+vif_values_3 <- vif(model_3)
+print(vif_values_3)
+forest_model(model_3)
+```
+
+### Модель 4 (IPA)
+
+```{r}
+df_pred_IPA_model_4 <- df_pred_IPA_clear %>%
+  select(LBXGH1, IPA)
+
+model_4 <- lm(LBXGH1 ~ ., data = df_pred_IPA_model_4)
+summary(model_4)
+tbl_regression(model_4)
+resid_panel(model_4)
+forest_model(model_4)
+```  
+### Модель 5 (ИМТ, САД)
+```{r}
+df_pred_model_5 <- df_pred_IPA_clear %>%
+  select(LBXGH1, BMXBMI, MeanBP)
+
+model_5 <- lm(LBXGH1 ~ ., data = df_pred_model_5)
+summary(model_5)
+tbl_regression(model_5)
+resid_panel(model_5)
+forest_model(model_5)
+```
+
+### Модель 6 (ИМТ)
+
+```{r}
+df_pred_IPA_model_6 <- df_pred_IPA_clear %>%
+  select(LBXGH1, BMXBMI)
+
+model_6 <- lm(LBXGH1 ~ ., data = df_pred_IPA_model_6)
+summary(model_6)
+tbl_regression(model_6)
+resid_panel(model_6)
+forest_model(model_6)
+```
+
+
+### Были сравнены регрессионные модели, использующих разные комбинации предикторов: Модель 1 (ИМТ, САД, IPA), Модель 2 (САД, IPA), Модель 3 (IPA, ИМТ), Модель 4 (IPA), Модель 5 (ИМТ, САД), Модель 6 (ИМТ). Большое влияние на уровень гликированного гемоглобина оказывает ИМТ. Расчитанный индекс активности (IPA) хоть и имеет значительную обратную корреляцию с HbA1c сильный вклад в регрессию не внёс. Однако, лучший результат по метрике R^2 = 0.05622 показала модель, использующая все 3 переменные.
