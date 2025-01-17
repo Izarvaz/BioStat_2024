@@ -1,0 +1,145 @@
+---
+title: "HW_power_analisys"
+author: "Zarva_I"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+# Загрузка библиотек
+library(TrialSize)
+library(epiR)
+```
+
+## Задача 1
+### Предположения^
+### Среднее улучшение индекса ОФВ1/ЖЕЛ для препарата R: 7.2 ± 3.1%
+### Граница не меньшей эффективности: 2%
+### Альфа = 0.025 (односторонняя), Мощность = 80% (Бета = 0.2)
+```{r}
+result_task1 <- TwoSampleMean.NIS(
+    alpha = 0.025,
+    beta = 0.2,
+    sigma = 3.1,
+    k = 1,
+    delta = 0,
+    margin = 2
+)
+
+print(paste("Размер выборки на группу (чел.):", ceiling(result_task1)));
+adjusted_sample_size <- ceiling(result_task1 / (1 - 0.2) / (1 - 0.1))
+print(paste("Скорректированный размер выборки на группу с учётом выбывания (чел.):", adjusted_sample_size))
+
+```
+## Задача 2
+### Предположения:
+### Доля пациентов без новых очагов на МРТ для препарата R: 66%
+### Ожидаемое улучшение для препарата T: 15%
+### Граница превосходства: 1%
+### Соотношение распределения: 2 (группа T к группе R)
+### Альфа = 0.025 (односторонняя), Мощность = 80% (Бета = 0.2)
+
+
+```{r}
+p_treat <- 0.81
+p_control <- 0.66
+r <- 2 
+
+n_total <- epi.sssupb(
+    treat = p_treat,
+    control = p_control,
+    delta = 0.01,
+    alpha = 0.025,
+    power = 0.8,
+    r = r,
+    n = NA
+)
+
+n_treat <- n_total[['n.treat']]
+n_control <- n_total[['n.control']]
+
+print(paste("Размер выборки для группы лечения:", ceiling(n_treat), " для контрольной группы:", ceiling(n_control)))
+
+adjusted_sample_size_treat <- ceiling(n_treat / (1 - 0.2) / (1 - 0.1))
+adjusted_sample_size_control <- ceiling(n_control / (1 - 0.2) / (1 - 0.1))
+
+print(paste("Скорректированный размер выборки для группы лечения:", adjusted_sample_size_treat, "для контрольной группы:", adjusted_sample_size_control))
+
+```
+## Задача 3
+### Предположения:
+### Средняя кровопотеря для препарата B: 306 ± 52 мл
+### Ожидаемое снижение для препарата A: 20%
+### Граница превосходства: 50 мл
+### Соотношение распределения: 3:1 (75% к 25%)
+### Альфа = 0.025 (односторонняя), Мощность = 80% (Бета = 0.2)
+
+```{r}
+mean_B <- 306
+std_B <- 52
+mean_A <- mean_B * 0.8
+delta <- 50
+allocation_ratio <- 3
+
+result_task3 <- TwoSampleMean.NIS(
+    alpha = 0.025,
+    beta = 0.2,
+    sigma = std_B,
+    k = allocation_ratio,
+    delta = mean_B - mean_A,
+    margin = delta
+)
+
+sample_size_A <- ceiling(result_task3 * (allocation_ratio / (1 + allocation_ratio)))
+sample_size_B <- ceiling(result_task3 / (1 + allocation_ratio))
+
+print(paste("Размер выборки для группы препарата A:", sample_size_A, "; для группы препарата B:", sample_size_B));
+
+adjusted_sample_size_A <- ceiling(sample_size_A / (1 - 0.2) / (1 - 0.1))
+adjusted_sample_size_B <- ceiling(sample_size_B / (1 - 0.2) / (1 - 0.1))
+
+print(paste("Скорректированный размер выборки для группы препарата A:", adjusted_sample_size_A, "; для группы препарата B:", adjusted_sample_size_B))
+
+```
+## Задача 4
+### Предположения:
+### Частота рецидивов для препарата X: 32%
+### Ожидаемое снижение для препарата Y: 15%
+### Граница превосходства: 5%
+### Всего доступно упаковок препарата X: 250
+### Альфа = 0.025 (односторонняя), Мощность = 80% (Бета = 0.2)
+
+```{r}
+p_x <- 0.32
+p_y <- 0.17
+delta <- 0.05
+packs_x <- 250
+
+r <- packs_x / 250
+result_task4 <- epi.sssupb(
+    treat = p_y,
+    control = p_x,
+    delta = 0,
+    alpha = 0.025,
+    power = 0.8,
+    r = r,
+    n = NA
+)
+
+n_treat <- result_task4[['n.treat']]
+n_control <- result_task4[['n.control']]
+
+print(paste("Размер выборки для группы препарата Y:", ceiling(n_treat), "; для группы препарата X:", ceiling(n_control)))
+adjusted_sample_size_y <- ceiling(n_treat / (1 - 0.2) / (1 - 0.1))
+adjusted_sample_size_x <- ceiling(n_control / (1 - 0.2) / (1 - 0.1))
+print(paste("Скорректированный размер выборки для группы препарата Y:", adjusted_sample_size_y, "; для группы препарата X:", adjusted_sample_size_x))
+```
+
+
+
+
+

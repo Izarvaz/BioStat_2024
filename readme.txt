@@ -1,5 +1,5 @@
 Синхронихация
-cd /c/Users/izarv/Documents/BioInf/BioInf
+cd /f/MyProjects/BioStat_2024
 git status
 
 $ git commit -m 'Мой первый коммит!'
