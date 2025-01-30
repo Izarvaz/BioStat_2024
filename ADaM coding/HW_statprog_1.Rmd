@@ -6,8 +6,8 @@ output: html_document
 ---
 
 ```{r}
-library(dplyr)
-library(lubridate)
+library(tidyverse)
+library(readxl)
 library(openxlsx)
 ```
 
@@ -207,107 +207,15 @@ colnames(ADSL)
 # Согласно спецификации STUDYID, USUBJID, TRTP, TRTPN, MHSEQ, MHCAT, MHTERM, MHDECOD, MHBODSYS, MHSTDTC, ASTDT, ASTDTF, MHENDTC, AENDT, AENDTF, MHENRTPT, MHENRF
 ```
 
-# Предобработка ADSL
-```{r}
-ADSL_1 <- ADSL %>% 
-  select(STUDYID, USUBJID, TRTP, TRTPN)
-```
-
-# Предобработка MH
-```{r}
-MH <- read.xlsx("SDTM/MH_MEDICALHISTORY.xlsx")
-MH <- MH %>% 
-  select(STUDYID, SUBJID, MHSEQ, MHCAT, MHTERM, MHDECOD, MHBODSYS, MHSTDTC, MHENDTC, MHENRTPT) %>%
-   mutate(
-    MHSEQ = as.integer(MHSEQ),
-    MHENDTC = as.character(MHENDTC))
-```
-
-```{r mh_dates}
-mh_dates <- MH %>% 
-  group_by(SUBJID) %>% 
-  mutate(
-    N = length(MHSEQ[!is.na(MHSEQ)]),
-    L = last(MHSEQ[!is.na(MHSEQ)])
-  ) %>% 
-  ungroup() %>% 
-  mutate(TYPE = ifelse(MHSEQ == 1, 'ASTDT',
-                       ifelse(MHSEQ == L, 'AENDT', '')),
-         MHSTDTC = case_when(
-           grepl("^\\d{4}-\\d{2}-\\d{2}$", MHSTDTC) ~ MHSTDTC,
-           grepl("^\\d{4}-\\d{2}$", MHSTDTC) ~ paste0(MHSTDTC, "-01"),
-           grepl("^\\d{4}$", MHSTDTC) ~ paste0(MHSTDTC, "-01-01"),
-           TRUE ~ NA_character_
-         ),
-         MHENDTC = case_when(
-           grepl("^\\d{4}-\\d{2}-\\d{2}$", MHENDTC) ~ MHENDTC,
-           grepl("^\\d{4}-\\d{2}$", MHENDTC) ~ paste0(MHENDTC, "-01"),
-           grepl("^\\d{4}$", MHENDTC) ~ paste0(MHENDTC, "-01-01"),
-           TRUE ~ NA_character_
-         )) %>% 
-  filter(TYPE != '') %>% 
-  select(SUBJID, MHSTDTC, MHENDTC, TYPE) %>% 
-  spread(TYPE, MHSTDTC)
-```
-
-# Объединение ADSL и MH в ADMH
-```{r admh_creation}
-ADMH <- MH %>%
-  left_join(ADSL, by = "STUDYID") %>%
-  left_join(mh_dates, by = "SUBJID") %>%
-  mutate(
-    USUBJID = paste(STUDYID, SUBJID, sep = "-"),
-    ASTDT = as.Date(ASTDT, format = "%Y-%m-%d"),
-    AENDT = as.Date(AENDT, format = "%Y-%m-%d"),
-    ASTDTF = ifelse(is.na(ASTDT), "U", ""),
-    AENDTF = ifelse(is.na(AENDT), "U", ""),
-    MHENRF = ifelse(MHENRTPT == "ONGOING", "ONGOING", "")
-  ) %>%
-  select(STUDYID, USUBJID, TRTP, TRTPN, MHSEQ, MHCAT, MHTERM, MHDECOD, MHBODSYS, MHSTDTC, ASTDT, ASTDTF, MHENDTC, AENDT, AENDTF, MHENRTPT, MHENRF)
-```
-```
-
-
-
-# Объединение ADSL и MH в ADMH
-```{r}
-ADMH <- MH %>%
-  left_join(adsl, by = "STUDYID") %>%
-  mutate(
-    USUBJID = paste(STUDYID, SUBJID, sep = "-"),
-    ASTDT = case_when(
-      str_detect(MHSTDTC, "^\d{4}-\d{2}-\d{2}$") ~ as.Date(MHSTDTC, format = "%Y-%m-%d"),
-      str_detect(MHSTDTC, "^\d{4}-\d{2}$") ~ as.Date(paste0(MHSTDTC, "-01"), format = "%Y-%m-%d"),
-      str_detect(MHSTDTC, "^\d{4}$") ~ as.Date(paste0(MHSTDTC, "-01-01"), format = "%Y-%m-%d"),
-      TRUE ~ NA_Date_
-    ),
-    AENDT = case_when(
-      str_detect(MHENDTC, "^\d{4}-\d{2}-\d{2}$") ~ as.Date(MHENDTC, format = "%Y-%m-%d"),
-      str_detect(MHENDTC, "^\d{4}-\d{2}$") ~ as.Date(paste0(MHENDTC, "-01"), format = "%Y-%m-%d"),
-      str_detect(MHENDTC, "^\d{4}$") ~ as.Date(paste0(MHENDTC, "-01-01"), format = "%Y-%m-%d"),
-      TRUE ~ NA_Date_
-    ),
-    ASTDTF = ifelse(is.na(ASTDT), "U", ""),
-    AENDTF = ifelse(is.na(AENDT), "U", ""),
-    MHENRF = ifelse(MHENRTPT == "ONGOING", "ONGOING", "")
-  ) %>%
-  select(STUDYID, USUBJID, TRTP, TRTPN, MHSEQ, MHCAT, MHTERM, MHDECOD, MHBODSYS, MHSTDTC, ASTDT, ASTDTF, MHENDTC, AENDT, AENDTF, MHENRTPT, MHENRF)
-```
+# Загрузка ADSL MH
 
 ```{r}
-str(ADMH)
+ADSL_1 <- read.xlsx('./ADaM-like/ADSL.xlsx')
+MH <- read.xlsx("./SDTM/MH_MEDICALHISTORY.xlsx")
 ```
-
-
-
-
-
-
-
-# Предобработка ADSL
 
 ```{r adsl_prep}
-ADSL_1 <- ADSL %>% 
+ADSL_1 <- ADSL_1 %>% 
   select(STUDYID, USUBJID, TRTP, TRTPN) %>%
   mutate(TRTPN = as.integer(TRTPN))
 ```
@@ -317,16 +225,21 @@ ADSL_1 <- ADSL %>%
 MH <- MH %>% 
   select(STUDYID, SUBJID, MHSEQ, MHCAT, MHTERM, MHDECOD, MHBODSYS, MHSTDTC, MHENDTC, MHENRTPT) %>%
   mutate(
-    MHSEQ = as.integer(MHSEQ),  # Приведение MHSEQ к числовому типу
-    MHENDTC = as.character(MHENDTC),  # Приведение типа к строке
-    MHSTDTC = as.character(MHSTDTC)  # Приведение типа к строке
+    MHSEQ = as.integer(MHSEQ),
+    USUBJID = paste(STUDYID, SUBJID, sep = "-"),
+    MHENDTC = as.character(MHENDTC), 
+    MHSTDTC = as.character(MHSTDTC)
   )
 ```
 
-# Определение дат начала и окончания
+
+```{r}
+colnames(MH_DATES)
+```
+
 ```{r mh_dates}
-mh_dates <- MH %>% 
-  group_by(SUBJID, STUDYID) %>% 
+MH_DATES <- MH %>% 
+  group_by(USUBJID, STUDYID) %>% 
   mutate(
     N = length(MHSEQ[!is.na(MHSEQ)]),
     L = last(MHSEQ[!is.na(MHSEQ)])
@@ -335,53 +248,46 @@ mh_dates <- MH %>%
   mutate(TYPE = ifelse(MHSEQ == 1, 'ASTDT',
                        ifelse(MHSEQ == L, 'AENDT', '')),
          MHSTDTC = case_when(
-           grepl("^\\d{4}-\\d{2}-\\d{2}$", MHSTDTC) ~ MHSTDTC,
-           grepl("^\\d{4}-\\d{2}$", MHSTDTC) ~ paste0(MHSTDTC, "-01"),
-           grepl("^\\d{4}$", MHSTDTC) ~ paste0(MHSTDTC, "-01-01"),
+           grepl("^\\d{4}-\\d{2}-\\d{2}$", MHSTDTC) ~ format(as.Date(MHSTDTC, format = "%Y-%m-%d"), "%d.%m.%Y"),
+           grepl("^\\d{4}-\\d{2}$", MHSTDTC) ~ format(as.Date(paste0(MHSTDTC, "-01"), format = "%Y-%m-%d"), "%d.%m.%Y"),
+           grepl("^\\d{4}$", MHSTDTC) ~ format(as.Date(paste0(MHSTDTC, "-01-01"), format = "%Y-%m-%d"), "%d.%m.%Y"),
            TRUE ~ NA_character_
          ),
          MHENDTC = case_when(
-           grepl("^\\d{4}-\\d{2}-\\d{2}$", MHENDTC) ~ MHENDTC,
-           grepl("^\\d{4}-\\d{2}$", MHENDTC) ~ paste0(MHENDTC, "-01"),
-           grepl("^\\d{4}$", MHENDTC) ~ paste0(MHENDTC, "-01-01"),
+           grepl("^\\d{4}-\\d{2}-\\d{2}$", MHENDTC) ~ format(as.Date(MHENDTC, format = "%Y-%m-%d"), "%d.%m.%Y"),
+           grepl("^\\d{4}-\\d{2}$", MHENDTC) ~ format(as.Date(paste0(MHENDTC, "-01"), format = "%Y-%m-%d"), "%d.%m.%Y"),
+           grepl("^\\d{4}$", MHENDTC) ~ format(as.Date(paste0(MHENDTC, "-01-01"), format = "%Y-%m-%d"), "%d.%m.%Y"),
            TRUE ~ NA_character_
          )) %>% 
   filter(TYPE != '') %>% 
-  select(STUDYID, SUBJID, MHSTDTC, MHENDTC, TYPE) %>% 
-  spread(TYPE, MHSTDTC)
+  select(STUDYID, USUBJID, MHSTDTC, MHENDTC, TYPE) %>% 
+  spread(TYPE, MHSTDTC, fill = NA)
 ```
 
+# Объединение ADSL и MH в ADMH
 ```{r admh_creation}
 ADMH <- MH %>%
   left_join(ADSL_1, by = c("STUDYID", "USUBJID")) %>%
-  left_join(mh_dates, by = c("STUDYID", "SUBJID")) %>%
+  left_join(MH_DATES %>% select(STUDYID, USUBJID, ASTDT, AENDT, MHENDTC), by = c("STUDYID", "USUBJID")) %>%
   mutate(
-    USUBJID = paste(STUDYID, SUBJID, sep = "-"),
-    ASTDT = as.Date(ASTDT, format = "%Y-%m-%d"),
-    AENDT = as.Date(AENDT, format = "%Y-%m-%d"),
+    ASTDT = as.Date(ASTDT, format = "%d.%m.%Y"),
+    AENDT = as.Date(AENDT, format = "%d.%m.%Y"),
     ASTDTF = ifelse(is.na(ASTDT), "U", ""),
     AENDTF = ifelse(is.na(AENDT), "U", ""),
     MHENRF = ifelse(MHENRTPT == "ONGOING", "ONGOING", "")
   ) %>%
-  select(STUDYID, USUBJID, TRTP, TRTPN, MHSEQ, MHCAT, MHTERM, MHDECOD, MHBODSYS, MHSTDTC, ASTDT, ASTDTF, MHENDTC, AENDT, AENDTF, MHENRTPT, MHENRF)
+  select(STUDYID, USUBJID, TRTP, TRTPN, MHSEQ, MHCAT, MHTERM, MHDECOD, MHBODSYS, MHSTDTC, ASTDT, ASTDTF, MHENDTC.x, AENDT, AENDTF, MHENRTPT, MHENRF) %>%
+  rename(MHENDTC = MHENDTC.x)
 ```
 
+```{r}
+# Согласно спецификации STUDYID, USUBJID, TRTP, TRTPN, MHSEQ, MHCAT, MHTERM, MHDECOD, MHBODSYS, MHSTDTC, ASTDT, ASTDTF, MHENDTC, AENDT, AENDTF, MHENRTPT, MHENRF
+```
 
+```{r}
+str(ADMH)
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```{r save_admh}
+write.xlsx(ADMH, "ADMH.xlsx")
+```
