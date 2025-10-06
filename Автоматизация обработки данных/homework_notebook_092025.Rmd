@@ -1,19 +1,21 @@
 ---
 title: "automatization_notebook"
-author: "User Name"
-date: "`r Sys.Date()`"
-output: word_document
----
-<!-- укажите имя автора -->
-<!-- добавьте оглавление -->
-<!-- при желании создайте референсный документ, где вы настроите стили -->
 
+output: 
+  word_document:
+    toc: true
+toc-title: "Оглавление"
+---
+
+\newpage
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, error = FALSE)
 
 library(flextable)
 library(tidyverse)
+library(readxl)
+library(RColorBrewer)
 
 ```
 
@@ -28,7 +30,9 @@ library(tidyverse)
 
 2) Это датасет в широком формате: на каждого субъекта должна приходиться только одна строка. Если это не так, попробуйте понять в чём проблема и как это исправить;
 
-```{r}
+```{r read_data}
+
+dm_1 <- read.csv2("data/dm.csv", dec = ",")
 
 ```
 
@@ -44,9 +48,44 @@ library(tidyverse)
 
 8) Назовите полученный датасет `dm`.
 
-```{r}
+```{r calc}
+#Сколько человек в каждой группе терапии (`ACTARM`)?
+dm_1 %>% count(ACTARM)
+
+#Выберите переменные `USUBJID`, `AGE`, `SEX`, `RACE`, `ETHNIC`, `ACTARM`;
+dm_1 <- dm_1 %>%
+  select(USUBJID, AGE, SEX, RACE, ETHNIC, ACTARM)
+colnames(dm_1)
+
+#Группы терапии "Xanomeline High Dose", "Xanomeline Low Dose"
+#Отфильтруйте субъектов с отсутствующим значением возраста;
+
+dm <- dm_1 %>%
+  filter(ACTARM %in% c("Xanomeline High Dose", "Xanomeline Low Dose")
+         ,!is.na(AGE)) %>% 
+  rename(
+    "Группа" = ACTARM,
+    "Возраст" = AGE,
+    "Этническая_принадлежность" = ETHNIC,
+    "Пол" = SEX,
+    "Раса" = RACE) %>% 
+    mutate(
+     across(c("Группа","Этническая_принадлежность","Пол","Раса"), function(x) as.factor(x))
+      )
+
+#Удаляем трёхсотлетних эльфов
+dm <- dm %>%
+  mutate(
+    Возраст = if_else(Возраст > 100, NA_real_, Возраст)
+  )
+glimpse(dm)
+      
+#Как функция `filter()` поступает с пропущенными значениями? 
+#Функция фильтр оставляет все значения по условию, но если стоит "!", то выполянется условие обратное написанному
 
 ```
+
+\newpage
 
 ## 1.2. VS (Vital Signs)
 
@@ -56,7 +95,45 @@ library(tidyverse)
 наблюдений (строк) на одного субъекта?
 
 ```{r}
+vs_1 <- read.csv2("data/vs.csv", sep = ",", dec = ".", stringsAsFactors = FALSE) %>%
+  mutate(VISITNUM = as.integer(VISITNUM)) %>%
+  mutate(VSORRES = 
+           
+#Меняем сантиметровых на дюймовых
+as.numeric(str_replace_all(as.character(VSORRES), ",", "."))) %>%
+  mutate(
+    VSORRES  = if_else(
+      VSTEST == "Height" & USUBJID %in% c(
+        "01-704-1332","01-713-1141","01-704-1025",
+        "01-713-1106","01-717-1344","01-705-1059",
+        "01-704-1008","01-704-1120","01-704-1218"
+      ),
+      VSORRES / 2.54,       
+      VSORRES
+    ),
+    VSORRESU = if_else(
+      VSTEST == "Height" & USUBJID %in% c(
+        "01-704-1332","01-713-1141","01-704-1025",
+        "01-713-1106","01-717-1344","01-705-1059",
+        "01-704-1008","01-704-1120","01-704-1218"
+      ),
+      "IN",
+      VSORRESU
+    )
+  )
+vs_1 %>%
+  mutate(VISITNUM = as.integer(VISITNUM)) %>% 
+  group_by(USUBJID) %>%
+  summarise(n_obs = n()) %>%
+  summarise(
+    min_obs = min(n_obs),
+    max_obs = max(n_obs))
 
+vs_1 <- vs_1 %>% 
+  mutate(VISITNUM = as.integer(VISITNUM))
+
+
+glimpse(vs_1) 
 ```
 
 3) На каких визитах определялся рост и вес пациентов?
@@ -68,8 +145,26 @@ library(tidyverse)
 6) Назовите полученный датасет `vs`
 
 ```{r}
+vs_1 %>%
+  filter(VSTEST %in% c("Height", "Weight")) %>%
+  distinct(VSTEST, VISITNUM, VISIT)
 
+
+
+unique(vs_1$VSTEST)
+vs <- vs_1 %>%
+  filter(
+    VSTEST %in% c("Height", "Weight"),
+    VISITNUM == 1) %>% 
+    mutate(across(VISITNUM, function(x) str_c("Визит ",x))) %>% 
+    unite("variable_name", VISITNUM, VSTEST, sep = "__") %>% 
+    pivot_wider(names_from = variable_name, values_from = VSORRES, id_cols = USUBJID)
+
+
+glimpse(vs)
 ```
+
+\newpage
 
 ## 1.3. LB (Laboratory Test Results)
 
@@ -86,7 +181,23 @@ library(tidyverse)
 6) Назовите полученный датасет `lb`.
 
 ```{r}
+lb <- read_xlsx("data/lb.xlsx") %>%
+  mutate(
+    VISITNUM = readr::parse_number(as.character(VISITNUM)),
+    LBORRES  = as.numeric(str_replace_all(as.character(LBORRES), ",", "."))
+  ) %>%
+  filter(LBTESTCD == "CA", !is.na(VISITNUM), VISITNUM == floor(VISITNUM)) %>%
+  filter(VISITNUM %in% sort(unique(VISITNUM))[1:3]) %>%
+  distinct(USUBJID, VISITNUM, .keep_all = TRUE) %>%
+  select(USUBJID, VISITNUM, LBTESTCD, LBORRES) %>%
+  pivot_wider(
+    names_from  = c(VISITNUM, LBTESTCD),
+    values_from = LBORRES,
+    names_glue  = "V{VISITNUM}_{LBTESTCD}"
+  ) %>%
+  mutate(across(starts_with("V"), as.numeric))
 
+glimpse(lb)
 ```
 
 # 2. Объединение данных
@@ -96,8 +207,21 @@ library(tidyverse)
 2) Наблюдения, имеющиеся в `dm`, `vs` или `lb`, но не вошедшие в `data`, сохраните в датасет `extra`.
 
 ```{r}
+data <- dm %>%
+  inner_join(vs, by = "USUBJID") %>%
+  left_join(lb, by = "USUBJID")
 
+extra <- bind_rows(
+  dm %>% anti_join(data %>% distinct(USUBJID), by = "USUBJID") %>% mutate(.source = "dm"),
+  vs %>% anti_join(data %>% distinct(USUBJID), by = "USUBJID") %>% mutate(.source = "vs"),
+  lb %>% anti_join(data %>% distinct(USUBJID), by = "USUBJID") %>% mutate(.source = "lb")
+)
+
+glimpse(data)
+glimpse(extra)
 ```
+
+\newpage
 
 # 3. Дальнейшая очистка данных
 
@@ -106,7 +230,18 @@ library(tidyverse)
 2) Выведите общее описание данных.
 
 ```{r}
-
+data <- data %>%
+  mutate(
+    USUBJID = as.character(USUBJID),
+    Возраст = as.numeric(Возраст),
+    Пол = as.factor(Пол),
+    Раса = as.factor(Раса),
+    Этническая_принадлежность = as.factor(Этническая_принадлежность),
+    Группа = as.factor(Группа),
+    across(starts_with("Визит"), as.numeric),
+    across(starts_with("V"), as.numeric)
+  )
+glimpse(data)
 ```
 
 3) Отсортируйте данные по убыванию возраста и в алфавитном порядке для группы терапии (`ACTARM`);
@@ -120,7 +255,34 @@ library(tidyverse)
 7) Присвойте получившийся датасет переменной "cleaned_data";
 
 ```{r}
+cleaned_data <- data %>%
+  arrange(desc(Возраст), Группа) %>%          # (3)
+  group_by(Группа) %>%
+  mutate(
+    NUM = as.character(row_number()),         # (4) порядковый номер внутри группы
+    .repl = `Визит 1__Weight`[which.max(Возраст)],
+    `Визит 1__Weight` = if_else(              # (6) заполняем пропуски весом самого старшего
+      is.na(`Визит 1__Weight`), .repl, `Визит 1__Weight`
+    )
+  ) %>%
+  select(-.repl) %>%
+  ungroup()
 
+data %>%
+  group_by(Группа) %>%
+  filter(!is.na(`Визит 1__Weight`)) %>%
+  mutate(
+    mu = mean(`Визит 1__Weight`, na.rm = TRUE),
+    s  = sd(`Визит 1__Weight`,  na.rm = TRUE),
+    z  = (`Визит 1__Weight` - mu) / s
+  ) %>%
+  filter(is.finite(z), abs(z) > 3) %>%
+  ungroup() %>%
+  select(USUBJID, Группа, Возраст, `Визит 1__Weight`, z) %>%
+  write_csv("outliers.csv")
+
+glimpse(cleaned_data)
+glimpse(data)
 ```
 
 8) Сколько переменных и случаев в cleaned_data?
@@ -128,8 +290,20 @@ library(tidyverse)
 9) Сколько всего переменных с пропущенными значениями в данных и сколько пропущенных точек в каждой такой переменной?
 
 ```{r}
+cat("Количество случаев:", nrow(cleaned_data), "\n")
+cat("Количество переменных:", ncol(cleaned_data), "\n")
 
+na_summary <- cleaned_data %>%
+  summarise(across(everything(), ~sum(is.na(.)))) %>%
+  pivot_longer(everything(),
+               names_to = "variable",
+               values_to = "n_missing") %>%
+  filter(n_missing > 0)
+
+na_summary
 ```
+
+\newpage 
 
 # 4. Описательные статистики
 
@@ -139,7 +313,14 @@ library(tidyverse)
 *Например, если на визитах 1,2,3 показатель был равен, соответственно, 2,6,4, MEAN для данного пациента будет равным 4, а если на всех 3-ёх визитах показатель NA, MEAN должен быть равным NA*;
 
 ```{r}
-
+cleaned_data <- cleaned_data %>%
+  rowwise() %>%
+  mutate(
+    MEAN = if_all(starts_with("V"), is.na) %>% ifelse(NA_real_,
+            mean(c_across(c(V1_CA, V4_CA, V5_CA)), na.rm = TRUE))
+  ) %>%
+  ungroup()
+glimpse(cleaned_data)
 ```
 
 
@@ -164,7 +345,27 @@ library(tidyverse)
 1.9) Максимум;
 
 ```{r}
-
+summary_stats <- cleaned_data %>%
+  group_by(Группа) %>%
+  summarise(
+    across(
+      where(is.numeric),
+      list(
+        n_not_na = ~sum(!is.na(.)),
+        n_na     = ~sum(is.na(.)),
+        mean     = ~mean(., na.rm = TRUE),
+        median   = ~median(., na.rm = TRUE),
+        sd       = ~sd(., na.rm = TRUE),
+        q25      = ~quantile(., 0.25, na.rm = TRUE),
+        q75      = ~quantile(., 0.75, na.rm = TRUE),
+        IQR      = ~IQR(., na.rm = TRUE),
+        min      = ~min(., na.rm = TRUE),
+        max      = ~max(., na.rm = TRUE)
+      ),
+      .names = "{.col}_{.fn}"
+    )
+  )
+glimpse(summary_stats)
 ```
 
 ## 4.2. Категориальные переменные
@@ -176,7 +377,27 @@ library(tidyverse)
 1.2) Относительное количество по группе.
 
 ```{r}
-
+calc_cat <- cleaned_data %>%
+  group_by(Группа) %>%
+  summarise(
+    across(
+      where(~ is.factor(.) || is.character(.)),   
+      ~list(table(., useNA = "no")),              
+      .names = "{.col}"
+    )
+  ) %>%
+  pivot_longer(
+    cols = -Группа,
+    names_to = "Переменная",
+    values_to = "Частоты"
+  ) %>%
+  unnest_longer(Частоты) %>%
+  rename(Значение = Частоты_id, Абс_количество = Частоты) %>%
+  group_by(Группа, Переменная) %>%
+  mutate(
+    Отн_количество = round(Абс_количество / sum(Абс_количество) * 100, 1)
+  ) %>%
+  ungroup()
 
 ```
 
@@ -191,8 +412,21 @@ library(tidyverse)
 3) Раскрасьте боксплоты с помощью библиотеки RColorBrewer.
 
 ```{r}
+long_num <- cleaned_data %>%
+  select(Группа, where(is.numeric)) %>%
+  pivot_longer(-Группа, names_to = "Переменная", values_to = "Значение")
 
+ggplot(long_num, aes(x = Группа, y = Значение, fill = Группа)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.9) +
+  facet_wrap(~ Переменная, scales = "free_y", ncol = 3) +  # <-- ключевая строка
+  scale_fill_brewer(palette = "Set2") +
+  labs(x = NULL, y = NULL, title = "Боксплоты по группам терапии") +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 20, hjust = 1))
 
+cleaned_data %>% summarise(min_age = min(Возраст, na.rm=TRUE),
+                           max_age = max(Возраст, na.rm=TRUE))
 
 ```
 
@@ -201,6 +435,24 @@ library(tidyverse)
 1) Сделайте подходящие визуализации категориальных переменных. Обоснуйте, почему выбрали именно этот тип.
 
 ```{r}
+cat_vars <- c("Пол", "Раса", "Этническая_принадлежность")
+
+for (var in cat_vars) {
+  p <- ggplot(cleaned_data, aes(x = .data[[var]], fill = Группа)) +
+    geom_bar(position = "dodge", color = "black") +
+    scale_fill_brewer(palette = "Set2") +
+    labs(
+      title = paste("Распределение переменной:", var, "по группам терапии"),
+      x = var,
+      y = "Количество субъектов",
+      fill = "Группа терапии"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(
+      axis.text.x = element_text(angle = 25, hjust = 1)
+    )
+  print(p)
+}
 
 
 
